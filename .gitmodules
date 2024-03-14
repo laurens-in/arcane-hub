@@ -1,0 +1,9 @@
+[submodule "external/FreeRTOS"]
+	path = external/FreeRTOS
+	url = git@github.com:FreeRTOS/FreeRTOS-Kernel.git
+[submodule "external/tinyUSB"]
+	path = external/tinyUSB
+	url = git@github.com:hathach/tinyusb.git
+[submodule "external/nrfx"]
+	path = external/nrfx
+	url = git@github.com:NordicSemiconductor/nrfx.git

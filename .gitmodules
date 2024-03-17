@@ -10,3 +10,6 @@
 [submodule "external/CMSIS_5"]
 	path = external/CMSIS_5
 	url = git@github.com:ARM-software/CMSIS_5.git
+[submodule "external/uf2"]
+	path = external/uf2
+	url = git@github.com:microsoft/uf2

@@ -65,7 +65,7 @@ target_include_directories(${PROJECT_NAME} PUBLIC
 
 # TODO: remove and fix in toolchain
 set(CMAKE_C_FLAGS
-        "-mthumb -mcpu=cortex-m4 -mfloat-abi=hard -mfpu=fpv4-sp-d16"
+        "-mthumb -mcpu=cortex-m4 -mfloat-abi=hard -mfpu=fpv4-sp-d16 -g"
 )
 
 # Convert to uf2

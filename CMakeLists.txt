@@ -44,6 +44,8 @@ target_sources(${PROJECT_NAME} PUBLIC
         ${CMAKE_CURRENT_SOURCE_DIR}/external/tinyUSB/src/portable/nordic/nrf5x/dcd_nrf5x.c
         ${CMAKE_CURRENT_SOURCE_DIR}/external/nrfx/drivers/src/nrfx_uarte.c
         ${CMAKE_CURRENT_SOURCE_DIR}/external/nrfx/drivers/src/nrfx_power.c
+        ${CMAKE_CURRENT_SOURCE_DIR}/external/nrfx/drivers/src/nrfx_gpiote.c
+        ${CMAKE_CURRENT_SOURCE_DIR}/external/nrfx/helpers/nrfx_flag32_allocator.c
         ${CMAKE_CURRENT_SOURCE_DIR}/external/nrfx/mdk/gcc_startup_${MCU_VARIANT}.S
         ${CMAKE_CURRENT_SOURCE_DIR}/external/nrfx/mdk/system_${MCU_VARIANT}.c
 )
@@ -59,6 +61,7 @@ target_include_directories(${PROJECT_NAME} PUBLIC
         ${CMAKE_CURRENT_SOURCE_DIR}/external/nrfx/mdk
         ${CMAKE_CURRENT_SOURCE_DIR}/external/nrfx/drivers/include
         ${CMAKE_CURRENT_SOURCE_DIR}/external/nrfx/drivers/src
+        ${CMAKE_CURRENT_SOURCE_DIR}/external/nrfx/helpers
         ${CMAKE_CURRENT_SOURCE_DIR}/external/nrfx/hal
         ${CMAKE_CURRENT_SOURCE_DIR}/external/CMSIS_5/CMSIS/Core/Include
 )

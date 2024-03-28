@@ -27,6 +27,8 @@
 #include <stdio.h>
 #include <string.h>
 
+#include "nrfx_gpiote.h"
+
 #include "bsp/board_api.h"
 #include "tusb.h"
 
@@ -52,15 +54,35 @@ enum  {
   BLINK_SUSPENDED = 2500,
 };
 
+#define _PINNUM(port, pin)    ((port)*32 + (pin))
+#define BUTTON_PIN      _PINNUM(1, 02)
+
 static uint32_t blink_interval_ms = BLINK_NOT_MOUNTED;
 
 void led_blinking_task(void);
 void midi_task(void);
+void gpiote_irq_handler(nrfx_gpiote_pin_t pin, nrf_gpiote_polarity_t action);
 
 /*------------- MAIN -------------*/
 int main(void)
 {
   board_init();
+  
+  nrfx_err_t err_code;
+
+  // Configure GPIO pin for interrupt
+  nrfx_gpiote_in_config_t config = NRFX_GPIOTE_CONFIG_IN_SENSE_HITOLO(true);
+  config.pull = NRF_GPIO_PIN_PULLUP;
+  err_code = nrfx_gpiote_in_init(BUTTON_PIN, &config, gpiote_irq_handler);
+  nrfx_gpiote_trigger_enable(BUTTON_PIN, true);
+  nrfx_gpiote_trigger_enable(BUTTON_PIN, true);
+
+  // NRFX_IRQ_PRIORITY_SET(GPIOTE_IRQn, 5);
+    
+  // Enable global interrupts
+  NRFX_IRQ_ENABLE(GPIOTE_IRQn);
+
+  bool test = NRFX_IRQ_IS_ENABLED(GPIOTE_IRQn);
 
   // init device stack on configured roothub port
   tud_init(BOARD_TUD_RHPORT);
@@ -176,4 +198,10 @@ void led_blinking_task(void)
 
   board_led_write(led_state);
   led_state = 1 - led_state; // toggle
+}
+
+void gpiote_irq_handler(nrfx_gpiote_pin_t pin, nrf_gpiote_polarity_t action)
+{
+    // Toggle LED when the button is pressed
+    board_led_write(true);
 }

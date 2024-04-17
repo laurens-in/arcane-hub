@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.27.4)
+cmake_minimum_required(VERSION 3.20.0)
 
 project(
 	arcane
@@ -34,6 +34,7 @@ target_compile_definitions(${PROJECT_NAME} PUBLIC
 target_sources(${PROJECT_NAME} PUBLIC
         ${CMAKE_CURRENT_SOURCE_DIR}/src/main.c
         ${CMAKE_CURRENT_SOURCE_DIR}/src/usb_descriptors.c
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/mcp2515/mcp_can.c
         ${CMAKE_CURRENT_SOURCE_DIR}/external/tinyUSB/src/tusb.c
         ${CMAKE_CURRENT_SOURCE_DIR}/external/tinyUSB/src/device/usbd.c
         ${CMAKE_CURRENT_SOURCE_DIR}/external/tinyUSB/src/device/usbd_control.c
@@ -53,6 +54,7 @@ target_sources(${PROJECT_NAME} PUBLIC
 # includes
 target_include_directories(${PROJECT_NAME} PUBLIC
         ${CMAKE_CURRENT_SOURCE_DIR}/src
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/mcp2515
         ${CMAKE_CURRENT_SOURCE_DIR}/external/tinyUSB/hw
         ${CMAKE_CURRENT_SOURCE_DIR}/external/tinyUSB/hw/bsp/nrf
         ${CMAKE_CURRENT_SOURCE_DIR}/external/tinyUSB/hw/bsp/nrf/boards/feather_nrf52840_express

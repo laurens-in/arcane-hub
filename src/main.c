@@ -31,6 +31,7 @@
 
 #include "bsp/board_api.h"
 #include "tusb.h"
+#include "mcp2515/mcp_can.h"
 
 /* This MIDI example send sequence of note (on/off) repeatedly. To test on PC, you need to install
  * synth software and midi connection management software. On
@@ -90,6 +91,8 @@ int main(void)
   if (board_init_after_tusb) {
     board_init_after_tusb();
   }
+
+  can_init();
 
   while (1)
   {

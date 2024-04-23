@@ -30,11 +30,14 @@ target_compile_definitions(${PROJECT_NAME} PUBLIC
         S140
 )
 
+set(FREERTOS_KERNEL_PATH ${CMAKE_CURRENT_SOURCE_DIR}/external/FreeRTOS)
+set(FREERTOS_PORT GCC_ARM_CM4F CACHE STRING "")
+
 # sources
 target_sources(${PROJECT_NAME} PUBLIC
         ${CMAKE_CURRENT_SOURCE_DIR}/src/main.c
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/freertos_hook.c
         ${CMAKE_CURRENT_SOURCE_DIR}/src/usb_descriptors.c
-        ${CMAKE_CURRENT_SOURCE_DIR}/src/mcp2515/mcp_can.c
         ${CMAKE_CURRENT_SOURCE_DIR}/external/tinyUSB/src/tusb.c
         ${CMAKE_CURRENT_SOURCE_DIR}/external/tinyUSB/src/device/usbd.c
         ${CMAKE_CURRENT_SOURCE_DIR}/external/tinyUSB/src/device/usbd_control.c
@@ -49,23 +52,31 @@ target_sources(${PROJECT_NAME} PUBLIC
         ${CMAKE_CURRENT_SOURCE_DIR}/external/nrfx/helpers/nrfx_flag32_allocator.c
         ${CMAKE_CURRENT_SOURCE_DIR}/external/nrfx/mdk/gcc_startup_${MCU_VARIANT}.S
         ${CMAKE_CURRENT_SOURCE_DIR}/external/nrfx/mdk/system_${MCU_VARIANT}.c
+        ${CMAKE_CURRENT_SOURCE_DIR}/external/FreeRTOS/tasks.c
+        ${CMAKE_CURRENT_SOURCE_DIR}/external/FreeRTOS/queue.c
+        ${CMAKE_CURRENT_SOURCE_DIR}/external/FreeRTOS/list.c
+        ${CMAKE_CURRENT_SOURCE_DIR}/external/FreeRTOS/timers.c
+        ${CMAKE_CURRENT_SOURCE_DIR}/external/FreeRTOS/portable/GCC/ARM_CM4F/port.c
+        # ${CMAKE_CURRENT_SOURCE_DIR}/external/FreeRTOS/portable/MemMang/heap_3.c
 )
 
 # includes
 target_include_directories(${PROJECT_NAME} PUBLIC
         ${CMAKE_CURRENT_SOURCE_DIR}/src
-        ${CMAKE_CURRENT_SOURCE_DIR}/src/mcp2515
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/FreeRTOSConfig
         ${CMAKE_CURRENT_SOURCE_DIR}/external/tinyUSB/hw
         ${CMAKE_CURRENT_SOURCE_DIR}/external/tinyUSB/hw/bsp/nrf
         ${CMAKE_CURRENT_SOURCE_DIR}/external/tinyUSB/hw/bsp/nrf/boards/feather_nrf52840_express
         ${CMAKE_CURRENT_SOURCE_DIR}/external/tinyUSB/src
         ${CMAKE_CURRENT_SOURCE_DIR}/external/nrfx
-        ${CMAKE_CURRENT_SOURCE_DIR}/external/nrfx/mdk
-        ${CMAKE_CURRENT_SOURCE_DIR}/external/nrfx/drivers/include
         ${CMAKE_CURRENT_SOURCE_DIR}/external/nrfx/drivers/src
-        ${CMAKE_CURRENT_SOURCE_DIR}/external/nrfx/helpers
+        ${CMAKE_CURRENT_SOURCE_DIR}/external/nrfx/drivers/include
         ${CMAKE_CURRENT_SOURCE_DIR}/external/nrfx/hal
+        ${CMAKE_CURRENT_SOURCE_DIR}/external/nrfx/mdk
+        ${CMAKE_CURRENT_SOURCE_DIR}/external/nrfx/helpers
         ${CMAKE_CURRENT_SOURCE_DIR}/external/CMSIS_5/CMSIS/Core/Include
+        ${CMAKE_CURRENT_SOURCE_DIR}/external/FreeRTOS/include
+        ${CMAKE_CURRENT_SOURCE_DIR}/external/FreeRTOS/portable/GCC/ARM_CM4F
 )
 
 # TODO: remove and fix in toolchain
@@ -78,14 +89,10 @@ set(CMAKE_OBJCOPY /usr/lib/arm-none-eabi/bin/objcopy)
 
 add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
         COMMAND ${CMAKE_OBJCOPY} -Obinary $<TARGET_FILE:${PROJECT_NAME}> $<TARGET_FILE_DIR:${PROJECT_NAME}>/${PROJECT_NAME}.bin
-        COMMAND python3 ${CMAKE_CURRENT_SOURCE_DIR}/external/uf2/utils/uf2conv.py ${PROJECT_NAME}.bin -c -o ${PROJECT_NAME}.uf2
+        COMMAND python3 ${CMAKE_CURRENT_SOURCE_DIR}/external/uf2/utils/uf2conv.py -f 0xADA52840 --base 0x26000 ${PROJECT_NAME}.bin -c -o ${PROJECT_NAME}.uf2
         WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
         COMMENT "Converting ELF to UF2"
 )
-
-
-# set(FREERTOS_KERNEL_PATH external/FreeRTOS)
-# set(FREERTOS_PORT GCC_ARM_CM4F CACHE STRING "")
 
 # # Add the freertos_config for FreeRTOS-Kernel
 # add_library(freertos_config INTERFACE)

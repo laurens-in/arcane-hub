@@ -29,9 +29,15 @@
 
 #include "nrfx_gpiote.h"
 
+
+#include "FreeRTOS.h"
+#include "semphr.h"
+#include "queue.h"
+#include "task.h"
+#include "timers.h"
+
 #include "bsp/board_api.h"
 #include "tusb.h"
-#include "mcp2515/mcp_can.h"
 
 /* This MIDI example send sequence of note (on/off) repeatedly. To test on PC, you need to install
  * synth software and midi connection management software. On
@@ -56,49 +62,56 @@ enum  {
 };
 
 #define _PINNUM(port, pin)    ((port)*32 + (pin))
-#define BUTTON_PIN      _PINNUM(1, 02)
+#define BUTTON_PIN       NRF_GPIO_PIN_MAP(1, 02)
 
 static uint32_t blink_interval_ms = BLINK_NOT_MOUNTED;
 
+static uint8_t led_status = 0;
+
 void led_blinking_task(void);
 void midi_task(void);
+static void idle_task(void *params);
+StackType_t  idle_task_stack[128];
+StaticTask_t idle_task_taskdef;
+
 void gpiote_irq_handler(nrfx_gpiote_pin_t pin, nrf_gpiote_polarity_t action);
 
 /*------------- MAIN -------------*/
 int main(void)
 {
+
   board_init();
-  
-  nrfx_err_t err_code;
 
-  // Configure GPIO pin for interrupt
-  nrfx_gpiote_in_config_t config = NRFX_GPIOTE_CONFIG_IN_SENSE_HITOLO(true);
+  nrfx_gpiote_init(1);
+
+  nrf_gpio_cfg_input(BUTTON_PIN, NRF_GPIO_PIN_PULLUP);
+
+  nrfx_gpiote_in_config_t config = NRFX_GPIOTE_CONFIG_IN_SENSE_LOTOHI(true);
   config.pull = NRF_GPIO_PIN_PULLUP;
-  err_code = nrfx_gpiote_in_init(BUTTON_PIN, &config, gpiote_irq_handler);
-  nrfx_gpiote_trigger_enable(BUTTON_PIN, true);
+
+
+  NVIC_SetPriority(GPIOTE_IRQn, 2);
+
+  // nrfx_gpiote_in_init allocates a channel
+  nrfx_err_t err_code = nrfx_gpiote_in_init(BUTTON_PIN, &config, gpiote_irq_handler);
   nrfx_gpiote_trigger_enable(BUTTON_PIN, true);
 
-  // NRFX_IRQ_PRIORITY_SET(GPIOTE_IRQn, 5);
-    
-  // Enable global interrupts
-  NRFX_IRQ_ENABLE(GPIOTE_IRQn);
-
-  bool test = NRFX_IRQ_IS_ENABLED(GPIOTE_IRQn);
 
   // init device stack on configured roothub port
   tud_init(BOARD_TUD_RHPORT);
 
-  if (board_init_after_tusb) {
-    board_init_after_tusb();
-  }
+  // create task
+  xTaskCreateStatic(idle_task, "idle", 8, NULL, configMAX_PRIORITIES-10, idle_task_stack, &idle_task_taskdef);
 
-  can_init();
+  vTaskStartScheduler();
 
+  // scheduler started, this is never reached
   while (1)
   {
-    tud_task(); // tinyusb device task
-    led_blinking_task();
-    midi_task();
+    // tud_task(); // tinyusb device task
+    // led_blinking_task();
+    // midi_task();
+    __WFE(); // Wait for event (low power idle)
   }
 }
 
@@ -206,5 +219,17 @@ void led_blinking_task(void)
 void gpiote_irq_handler(nrfx_gpiote_pin_t pin, nrf_gpiote_polarity_t action)
 {
     // Toggle LED when the button is pressed
-    board_led_write(true);
+    led_status = led_status == 0 ? 1 : 0;
+    board_led_write(led_status);
+}
+
+void idle_task(void* param)
+{
+  (void) param;
+
+  // RTOS forever loop
+  while (1)
+  {
+    __WFE(); // Wait for event (low power idle)
+  }
 }

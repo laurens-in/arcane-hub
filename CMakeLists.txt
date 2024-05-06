@@ -38,6 +38,7 @@ target_sources(${PROJECT_NAME} PUBLIC
         ${CMAKE_CURRENT_SOURCE_DIR}/src/main.c
         ${CMAKE_CURRENT_SOURCE_DIR}/src/freertos_hook.c
         ${CMAKE_CURRENT_SOURCE_DIR}/src/usb_descriptors.c
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/mcp2515/mcp_can.c
         ${CMAKE_CURRENT_SOURCE_DIR}/external/tinyUSB/src/tusb.c
         ${CMAKE_CURRENT_SOURCE_DIR}/external/tinyUSB/src/device/usbd.c
         ${CMAKE_CURRENT_SOURCE_DIR}/external/tinyUSB/src/device/usbd_control.c
@@ -49,6 +50,7 @@ target_sources(${PROJECT_NAME} PUBLIC
         ${CMAKE_CURRENT_SOURCE_DIR}/external/nrfx/drivers/src/nrfx_uarte.c
         ${CMAKE_CURRENT_SOURCE_DIR}/external/nrfx/drivers/src/nrfx_power.c
         ${CMAKE_CURRENT_SOURCE_DIR}/external/nrfx/drivers/src/nrfx_gpiote.c
+        ${CMAKE_CURRENT_SOURCE_DIR}/external/nrfx/drivers/src/nrfx_spi.c
         ${CMAKE_CURRENT_SOURCE_DIR}/external/nrfx/helpers/nrfx_flag32_allocator.c
         ${CMAKE_CURRENT_SOURCE_DIR}/external/nrfx/mdk/gcc_startup_${MCU_VARIANT}.S
         ${CMAKE_CURRENT_SOURCE_DIR}/external/nrfx/mdk/system_${MCU_VARIANT}.c
@@ -64,6 +66,7 @@ target_sources(${PROJECT_NAME} PUBLIC
 target_include_directories(${PROJECT_NAME} PUBLIC
         ${CMAKE_CURRENT_SOURCE_DIR}/src
         ${CMAKE_CURRENT_SOURCE_DIR}/src/FreeRTOSConfig
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/mcp2515
         ${CMAKE_CURRENT_SOURCE_DIR}/external/tinyUSB/hw
         ${CMAKE_CURRENT_SOURCE_DIR}/external/tinyUSB/hw/bsp/nrf
         ${CMAKE_CURRENT_SOURCE_DIR}/external/tinyUSB/hw/bsp/nrf/boards/feather_nrf52840_express

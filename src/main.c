@@ -39,6 +39,8 @@
 #include "bsp/board_api.h"
 #include "tusb.h"
 
+#include "mcp2515/mcp_can.h"
+
 /* This MIDI example send sequence of note (on/off) repeatedly. To test on PC, you need to install
  * synth software and midi connection management software. On
  * - Linux (Ubuntu): install qsynth, qjackctl. Then connect TinyUSB output port to FLUID Synth input port
@@ -69,6 +71,11 @@ static uint32_t blink_interval_ms = BLINK_NOT_MOUNTED;
 static uint8_t led_status = 0;
 
 void led_blinking_task(void);
+
+static void can_task(void);
+StaticTask_t can_task_taskdef;
+StackType_t  can_task_stack[2048];
+
 void midi_task(void);
 static void idle_task(void *params);
 StackType_t  idle_task_stack[128];
@@ -100,8 +107,15 @@ int main(void)
   // init device stack on configured roothub port
   tud_init(BOARD_TUD_RHPORT);
 
+  // init SPI / CAN
+
+  mcp_spi_init();
+  mcp_can_begin(CAN_500KBPS, MCP_8MHz);
+
   // create task
-  xTaskCreateStatic(idle_task, "idle", 8, NULL, configMAX_PRIORITIES-10, idle_task_stack, &idle_task_taskdef);
+  xTaskCreateStatic(idle_task, "idle", 128, NULL, configMAX_PRIORITIES-10, idle_task_stack, &idle_task_taskdef);
+
+  xTaskCreateStatic(can_task, "can", 2048, NULL, configMAX_PRIORITIES-1, can_task_stack, &can_task_taskdef);
 
   vTaskStartScheduler();
 
@@ -214,6 +228,24 @@ void led_blinking_task(void)
 
   board_led_write(led_state);
   led_state = 1 - led_state; // toggle
+}
+
+static void can_task(void)
+{
+  while (1) {
+  uint8_t tmp_buffer[4] = {0x11, 0x22, 0x33, 0x44};
+
+  mcp_can_send_msg(0x1, 0, 4, &tmp_buffer);
+
+  if(CAN_MSGAVAIL == mcp_can_check_receive())
+    {
+      uint32_t can_id;
+      uint8_t buf[16];                
+      uint8_t len;    
+      mcp_can_read_msg(&can_id, &len, buf);
+    }
+
+  }
 }
 
 void gpiote_irq_handler(nrfx_gpiote_pin_t pin, nrf_gpiote_polarity_t action)

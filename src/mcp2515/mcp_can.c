@@ -1,10 +1,10 @@
 #include <string.h>
 
+#include "mcp_can.h"
+#include "nrf_common.h"
 #include "nrf_gpio.h"
 #include "nrf_spi.h"
 #include "nrfx_spi.h"
-#include "mcp_can.h"
-#include "nrf_common.h"
 
 #include "nrfx_gpiote.h"
 
@@ -59,26 +59,26 @@ void mcp_spi_init() {
 
   mcp_can_setcs(SPI_SS_PIN);
 
-  //old code
+  // old code
 
   nrf_gpio_cfg_input(MCP2515_PIN_INT, NRF_GPIO_PIN_NOPULL);
   nrfx_gpiote_in_config_t mcp2515_int_config =
       NRFX_GPIOTE_CONFIG_IN_SENSE_TOGGLE(true);
   // // mcp2515_int_config.pull = NRF_GPIO_PIN_PULLUP;
 
-
   err_code = nrfx_gpiote_in_init(MCP2515_PIN_INT, &mcp2515_int_config,
                                  mcp2515_int_pin_handler);
 
   nrfx_gpiote_in_event_enable(MCP2515_PIN_INT, true);
 
-  nrfx_spi_config_t spi_config = NRFX_SPI_DEFAULT_CONFIG(SPI_SCK_PIN, SPI_MOSI_PIN, SPI_MISO_PIN, SPI_SS_PIN);
+  nrfx_spi_config_t spi_config = NRFX_SPI_DEFAULT_CONFIG(
+      SPI_SCK_PIN, SPI_MOSI_PIN, SPI_MISO_PIN, SPI_SS_PIN);
   spi_config.frequency = NRF_SPI_FREQ_125K;
   spi_config.mode = NRF_SPI_MODE_0;
-//   spi_config.ss_pin = SPI_SS_PIN;
-//   spi_config.miso_pin = SPI_MISO_PIN;
-//   spi_config.mosi_pin = SPI_MOSI_PIN;
-//   spi_config.sck_pin = SPI_SCK_PIN;
+  //   spi_config.ss_pin = SPI_SS_PIN;
+  //   spi_config.miso_pin = SPI_MISO_PIN;
+  //   spi_config.mosi_pin = SPI_MOSI_PIN;
+  //   spi_config.sck_pin = SPI_SCK_PIN;
   spi_config.bit_order = NRF_SPI_BIT_ORDER_MSB_FIRST;
 
   err_code = nrfx_spi_init(&can_spi, &spi_config, spi_can_event_handler, NULL);
@@ -107,9 +107,9 @@ void mcp2515_reset() {
 
   // TODO: figure out how to replace this with nrfx_spi_xfer?
   // nrf_drv_spi_transfer(&can_spi, m_tx_buf, m_length, NULL, 0)
-      // TODO: add error check, remove above line
-      // APP_ERROR_CHECK(nrf_drv_spi_transfer(&can_spi, m_tx_buf, m_length,
-      // NULL, 0));
+  // TODO: add error check, remove above line
+  // APP_ERROR_CHECK(nrf_drv_spi_transfer(&can_spi, m_tx_buf, m_length,
+  // NULL, 0));
 
   // MARK: XFER
   nrfx_spi_xfer_desc_t xfer_desc = {.p_tx_buffer = m_tx_buf,
@@ -118,7 +118,7 @@ void mcp2515_reset() {
                                     .rx_length = 0};
   err_code = nrfx_spi_xfer(&can_spi, &xfer_desc, 0);
 
-      while (!spi_xfer_done) {
+  while (!spi_xfer_done) {
     // TODO: what is this? seems related to soft device and unnecessary
     // if (nrf_sdh_is_enabled())
     // {

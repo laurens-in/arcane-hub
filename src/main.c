@@ -72,7 +72,7 @@ static uint8_t led_status = 0;
 
 void led_blinking_task(void);
 
-static void can_task(void);
+static void can_task(void *params);
 StaticTask_t can_task_taskdef;
 StackType_t  can_task_stack[2048];
 
@@ -97,7 +97,7 @@ int main(void)
   config.pull = NRF_GPIO_PIN_PULLUP;
 
 
-  NVIC_SetPriority(GPIOTE_IRQn, 2);
+  NVIC_SetPriority(GPIOTE_IRQn, 3);
 
   // nrfx_gpiote_in_init allocates a channel
   nrfx_err_t err_code = nrfx_gpiote_in_init(BUTTON_PIN, &config, gpiote_irq_handler);
@@ -115,7 +115,7 @@ int main(void)
   // create task
   xTaskCreateStatic(idle_task, "idle", 128, NULL, configMAX_PRIORITIES-10, idle_task_stack, &idle_task_taskdef);
 
-  xTaskCreateStatic(can_task, "can", 2048, NULL, configMAX_PRIORITIES-1, can_task_stack, &can_task_taskdef);
+  // xTaskCreateStatic(can_task, "can", 2048, NULL, configMAX_PRIORITIES-1, can_task_stack, &can_task_taskdef);
 
   vTaskStartScheduler();
 
@@ -230,7 +230,7 @@ void led_blinking_task(void)
   led_state = 1 - led_state; // toggle
 }
 
-static void can_task(void)
+void can_task(void* param)
 {
   while (1) {
   uint8_t tmp_buffer[4] = {0x11, 0x22, 0x33, 0x44};

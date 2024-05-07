@@ -15,7 +15,7 @@
 static volatile bool spi_xfer_done = true;
 mcp_can_t m_mcp_can;
 
-#define SPI_CAN_INSTANCE 0 /**< SPI instance index. */
+#define SPI_CAN_INSTANCE 1 /**< SPI instance index. */
 static const nrfx_spi_t can_spi =
     NRFX_SPI_INSTANCE(SPI_CAN_INSTANCE); /**< SPI instance. */
 
@@ -59,14 +59,16 @@ void mcp_spi_init() {
 
   mcp_can_setcs(SPI_SS_PIN);
 
+  //old code
+
+  nrf_gpio_cfg_input(MCP2515_PIN_INT, NRF_GPIO_PIN_NOPULL);
   nrfx_gpiote_in_config_t mcp2515_int_config =
       NRFX_GPIOTE_CONFIG_IN_SENSE_TOGGLE(true);
-  mcp2515_int_config.pull = NRF_GPIO_PIN_PULLUP;
+  // // mcp2515_int_config.pull = NRF_GPIO_PIN_PULLUP;
+
 
   err_code = nrfx_gpiote_in_init(MCP2515_PIN_INT, &mcp2515_int_config,
                                  mcp2515_int_pin_handler);
-  // TODO: add error check
-  // APP_ERROR_CHECK(err_code);
 
   nrfx_gpiote_in_event_enable(MCP2515_PIN_INT, true);
 
@@ -94,6 +96,8 @@ void mcp2515_select() { nrf_gpio_pin_clear(m_mcp_can.m_cs); }
 void mcp2515_unselect() { nrf_gpio_pin_set(m_mcp_can.m_cs); }
 
 void mcp2515_reset() {
+  nrfx_err_t err_code = NRFX_SUCCESS;
+
   mcp2515_select();
 
   uint8_t m_tx_buf[1] = {MCP_RESET};
@@ -112,7 +116,7 @@ void mcp2515_reset() {
                                     .tx_length = m_length,
                                     .p_rx_buffer = NULL,
                                     .rx_length = 0};
-  nrfx_spi_xfer(&can_spi, &xfer_desc, 0);
+  err_code = nrfx_spi_xfer(&can_spi, &xfer_desc, 0);
 
       while (!spi_xfer_done) {
     // TODO: what is this? seems related to soft device and unnecessary

@@ -3,6 +3,8 @@
 #include "mcp_can.h"
 #include "nrf_common.h"
 #include "nrf_gpio.h"
+#include "nrf_spim.h"
+#include "nrfx_spim.h"
 #include "nrf_spi.h"
 #include "nrfx_spi.h"
 
@@ -16,8 +18,8 @@ static volatile bool spi_xfer_done = true;
 mcp_can_t m_mcp_can;
 
 #define SPI_CAN_INSTANCE 1 /**< SPI instance index. */
-static const nrfx_spi_t can_spi =
-    NRFX_SPI_INSTANCE(SPI_CAN_INSTANCE); /**< SPI instance. */
+static const nrfx_spim_t can_spi =
+    NRFX_SPIM_INSTANCE(SPI_CAN_INSTANCE); /**< SPI instance. */
 
 /**@brief Function for handling MCP2515 INT Pin events.
  *
@@ -40,9 +42,9 @@ void mcp2515_int_pin_handler(nrfx_gpiote_pin_t pin,
   }
 }
 
-void spi_can_event_handler(nrfx_spi_evt_t const *p_event, void *p_context) {
+void spi_can_event_handler(nrfx_spim_evt_t const *p_event, void *p_context) {
   switch (p_event->type) {
-  case NRFX_SPI_EVENT_DONE:
+  case NRFX_SPIM_EVENT_DONE:
     spi_xfer_done = true;
 #if MCP2515_DEBUG_MODE
     NRFX_LOG_DEBUG("SPI transfer complete");
@@ -71,7 +73,7 @@ void mcp_spi_init() {
 
   nrfx_gpiote_in_event_enable(MCP2515_PIN_INT, true);
 
-  nrfx_spi_config_t spi_config = NRFX_SPI_DEFAULT_CONFIG(
+  nrfx_spim_config_t spi_config = NRFX_SPIM_DEFAULT_CONFIG(
       SPI_SCK_PIN, SPI_MOSI_PIN, SPI_MISO_PIN, SPI_SS_PIN);
   spi_config.frequency = NRF_SPI_FREQ_125K;
   spi_config.mode = NRF_SPI_MODE_0;
@@ -81,7 +83,7 @@ void mcp_spi_init() {
   //   spi_config.sck_pin = SPI_SCK_PIN;
   spi_config.bit_order = NRF_SPI_BIT_ORDER_MSB_FIRST;
 
-  err_code = nrfx_spi_init(&can_spi, &spi_config, spi_can_event_handler, NULL);
+  err_code = nrfx_spim_init(&can_spi, &spi_config, NULL, NULL);
 
   // TODO: add error check
   // APP_ERROR_CHECK(err_code);
@@ -112,13 +114,13 @@ void mcp2515_reset() {
   // NULL, 0));
 
   // MARK: XFER
-  nrfx_spi_xfer_desc_t xfer_desc = {.p_tx_buffer = m_tx_buf,
+  nrfx_spim_xfer_desc_t xfer_desc = {.p_tx_buffer = m_tx_buf,
                                     .tx_length = m_length,
                                     .p_rx_buffer = NULL,
                                     .rx_length = 0};
-  err_code = nrfx_spi_xfer(&can_spi, &xfer_desc, 0);
+  err_code = nrfx_spim_xfer(&can_spi, &xfer_desc, 0);
 
-  while (!spi_xfer_done) {
+  while (spi_xfer_done) {
     // TODO: what is this? seems related to soft device and unnecessary
     // if (nrf_sdh_is_enabled())
     // {
@@ -152,13 +154,13 @@ uint8_t mcp2515_readRegister(const uint8_t address) {
   //                                        m_rx_buf, m_rx_length));
 
   // MARK: XFER
-  nrfx_spi_xfer_desc_t xfer_desc = {.p_tx_buffer = m_tx_buf,
+  nrfx_spim_xfer_desc_t xfer_desc = {.p_tx_buffer = m_tx_buf,
                                     .tx_length = m_tx_length,
                                     .p_rx_buffer = m_rx_buf,
                                     .rx_length = m_rx_length};
-  nrfx_spi_xfer(&can_spi, &xfer_desc, 0);
+  nrfx_spim_xfer(&can_spi, &xfer_desc, 0);
 
-  while (!spi_xfer_done) {
+  while (spi_xfer_done) {
     // if (nrf_sdh_is_enabled())
     // {
     //     sd_app_evt_wait();
@@ -195,13 +197,13 @@ void mcp2515_readRegisterS(const uint8_t address, uint8_t values[],
   //                                        m_rx_buf, m_rx_length));
 
   // MARK: XFER
-  nrfx_spi_xfer_desc_t xfer_desc = {.p_tx_buffer = m_tx_buf,
+  nrfx_spim_xfer_desc_t xfer_desc = {.p_tx_buffer = m_tx_buf,
                                     .tx_length = m_tx_length,
                                     .p_rx_buffer = m_rx_buf,
                                     .rx_length = m_rx_length};
-  nrfx_spi_xfer(&can_spi, &xfer_desc, 0);
+  nrfx_spim_xfer(&can_spi, &xfer_desc, 0);
 
-  while (!spi_xfer_done) {
+  while (spi_xfer_done) {
     // if (nrf_sdh_is_enabled())
     // {
     //     sd_app_evt_wait();
@@ -234,13 +236,13 @@ void mcp2515_setRegister(const uint8_t address, const uint8_t value) {
   //   0));
 
   // MARK: XFER
-  nrfx_spi_xfer_desc_t xfer_desc = {.p_tx_buffer = m_tx_buf,
+  nrfx_spim_xfer_desc_t xfer_desc = {.p_tx_buffer = m_tx_buf,
                                     .tx_length = m_length,
                                     .p_rx_buffer = NULL,
                                     .rx_length = 0};
-  nrfx_spi_xfer(&can_spi, &xfer_desc, 0);
+  nrfx_spim_xfer(&can_spi, &xfer_desc, 0);
 
-  while (!spi_xfer_done) {
+  while (spi_xfer_done) {
     // if (nrf_sdh_is_enabled())
     // {
     //     sd_app_evt_wait();
@@ -277,13 +279,13 @@ void mcp2515_setRegisterS(const uint8_t address, const uint8_t values[],
   //       nrf_drv_spi_transfer(&can_spi, m_tx_buf, m_tx_length, NULL, 0));
 
   // MARK: XFER
-  nrfx_spi_xfer_desc_t xfer_desc = {.p_tx_buffer = m_tx_buf,
+  nrfx_spim_xfer_desc_t xfer_desc = {.p_tx_buffer = m_tx_buf,
                                     .tx_length = m_tx_length,
                                     .p_rx_buffer = NULL,
                                     .rx_length = 0};
-  nrfx_spi_xfer(&can_spi, &xfer_desc, 0);
+  nrfx_spim_xfer(&can_spi, &xfer_desc, 0);
 
-  while (!spi_xfer_done) {
+  while (spi_xfer_done) {
     // if (nrf_sdh_is_enabled())
     // {
     //     sd_app_evt_wait();
@@ -314,13 +316,13 @@ void mcp2515_modifyRegister(const uint8_t address, const uint8_t mask,
   //   0));
 
   // MARK: XFER
-  nrfx_spi_xfer_desc_t xfer_desc = {.p_tx_buffer = m_tx_buf,
+  nrfx_spim_xfer_desc_t xfer_desc = {.p_tx_buffer = m_tx_buf,
                                     .tx_length = m_length,
                                     .p_rx_buffer = NULL,
                                     .rx_length = 0};
-  nrfx_spi_xfer(&can_spi, &xfer_desc, 0);
+  nrfx_spim_xfer(&can_spi, &xfer_desc, 0);
 
-  while (!spi_xfer_done) {
+  while (spi_xfer_done) {
     // if (nrf_sdh_is_enabled())
     // {
     //     sd_app_evt_wait();
@@ -352,13 +354,13 @@ uint8_t mcp2515_readStatus(void) {
   //       m_length));
 
   // MARK: XFER
-  nrfx_spi_xfer_desc_t xfer_desc = {.p_tx_buffer = m_tx_buf,
+  nrfx_spim_xfer_desc_t xfer_desc = {.p_tx_buffer = m_tx_buf,
                                     .tx_length = m_length,
                                     .p_rx_buffer = m_rx_buf,
                                     .rx_length = m_length};
-  nrfx_spi_xfer(&can_spi, &xfer_desc, 0);
+  nrfx_spim_xfer(&can_spi, &xfer_desc, 0);
 
-  while (!spi_xfer_done) {
+  while (spi_xfer_done) {
     // if (nrf_sdh_is_enabled())
     // {
     //     sd_app_evt_wait();

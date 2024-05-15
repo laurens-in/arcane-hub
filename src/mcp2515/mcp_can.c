@@ -10,10 +10,6 @@
 
 #include "nrfx_gpiote.h"
 
-// #include "nrf_log.h"
-// #include "nrf_log_ctrl.h"
-// #include "nrf_log_default_backends.h"
-
 static volatile bool spi_xfer_done = true;
 mcp_can_t m_mcp_can;
 
@@ -29,30 +25,8 @@ void mcp2515_int_pin_handler(nrfx_gpiote_pin_t pin,
                              nrf_gpiote_polarity_t action) {
   if (nrf_gpio_pin_read(pin)) {
     nrf_gpio_pin_set(BSP_LED_3);
-
-#if MCP2515_DEBUG_MODE
-    NRFX_LOG_DEBUG("mcp2515_int_pin_handler State: LO To HI");
-#endif
   } else {
     nrf_gpio_pin_clear(BSP_LED_3);
-
-#if MCP2515_DEBUG_MODE
-    NRFX_LOG_DEBUG("mcp2515_int_pin_handler State: HI To LO");
-#endif
-  }
-}
-
-void spi_can_event_handler(nrfx_spim_evt_t const *p_event, void *p_context) {
-  switch (p_event->type) {
-  case NRFX_SPIM_EVENT_DONE:
-    spi_xfer_done = true;
-#if MCP2515_DEBUG_MODE
-    NRFX_LOG_DEBUG("SPI transfer complete");
-#endif
-    break;
-
-  default:
-    break;
   }
 }
 
@@ -61,12 +35,9 @@ void mcp_spi_init() {
 
   mcp_can_setcs(SPI_SS_PIN);
 
-  // old code
-
   nrf_gpio_cfg_input(MCP2515_PIN_INT, NRF_GPIO_PIN_NOPULL);
   nrfx_gpiote_in_config_t mcp2515_int_config =
       NRFX_GPIOTE_CONFIG_IN_SENSE_TOGGLE(true);
-  // // mcp2515_int_config.pull = NRF_GPIO_PIN_PULLUP;
 
   err_code = nrfx_gpiote_in_init(MCP2515_PIN_INT, &mcp2515_int_config,
                                  mcp2515_int_pin_handler);
@@ -77,20 +48,9 @@ void mcp_spi_init() {
       SPI_SCK_PIN, SPI_MOSI_PIN, SPI_MISO_PIN, SPI_SS_PIN);
   spi_config.frequency = NRF_SPI_FREQ_125K;
   spi_config.mode = NRF_SPI_MODE_0;
-  //   spi_config.ss_pin = SPI_SS_PIN;
-  //   spi_config.miso_pin = SPI_MISO_PIN;
-  //   spi_config.mosi_pin = SPI_MOSI_PIN;
-  //   spi_config.sck_pin = SPI_SCK_PIN;
   spi_config.bit_order = NRF_SPI_BIT_ORDER_MSB_FIRST;
 
   err_code = nrfx_spim_init(&can_spi, &spi_config, NULL, NULL);
-
-  // TODO: add error check
-  // APP_ERROR_CHECK(err_code);
-
-#if MCP2515_DEBUG_MODE
-  NRFX_LOG_DEBUG("mcp_spi_init complete");
-#endif
 }
 
 void mcp2515_select() { nrf_gpio_pin_clear(m_mcp_can.m_cs); }
@@ -107,31 +67,11 @@ void mcp2515_reset() {
 
   spi_xfer_done = false;
 
-  // TODO: figure out how to replace this with nrfx_spi_xfer?
-  // nrf_drv_spi_transfer(&can_spi, m_tx_buf, m_length, NULL, 0)
-  // TODO: add error check, remove above line
-  // APP_ERROR_CHECK(nrf_drv_spi_transfer(&can_spi, m_tx_buf, m_length,
-  // NULL, 0));
-
-  // MARK: XFER
   nrfx_spim_xfer_desc_t xfer_desc = {.p_tx_buffer = m_tx_buf,
                                     .tx_length = m_length,
                                     .p_rx_buffer = NULL,
                                     .rx_length = 0};
   err_code = nrfx_spim_xfer(&can_spi, &xfer_desc, 0);
-
-  while (spi_xfer_done) {
-    // TODO: what is this? seems related to soft device and unnecessary
-    // if (nrf_sdh_is_enabled())
-    // {
-    //     // TODO: what is this?
-    //     sd_app_evt_wait();
-    // }
-    // else
-    // {
-    __WFE();
-    // }
-  }
 
   mcp2515_unselect();
 }
@@ -149,31 +89,16 @@ uint8_t mcp2515_readRegister(const uint8_t address) {
 
   spi_xfer_done = false;
 
-  // TODO: SPI XFER
-  //   APP_ERROR_CHECK(nrf_drv_spi_transfer(&can_spi, m_tx_buf, m_tx_length,
-  //                                        m_rx_buf, m_rx_length));
-
-  // MARK: XFER
   nrfx_spim_xfer_desc_t xfer_desc = {.p_tx_buffer = m_tx_buf,
                                     .tx_length = m_tx_length,
                                     .p_rx_buffer = m_rx_buf,
                                     .rx_length = m_rx_length};
   nrfx_spim_xfer(&can_spi, &xfer_desc, 0);
 
-  while (spi_xfer_done) {
-    // if (nrf_sdh_is_enabled())
-    // {
-    //     sd_app_evt_wait();
-    // }
-    // else
-    // {
-    __WFE();
-    // }
-  }
-
   mcp2515_unselect();
 
   return m_rx_buf[2];
+
 }
 
 void mcp2515_readRegisterS(const uint8_t address, uint8_t values[],
@@ -192,26 +117,12 @@ void mcp2515_readRegisterS(const uint8_t address, uint8_t values[],
 
   spi_xfer_done = false;
 
-  // TODO: SPI XFER
-  //   APP_ERROR_CHECK(nrf_drv_spi_transfer(&can_spi, m_tx_buf, m_tx_length,
-  //                                        m_rx_buf, m_rx_length));
-
-  // MARK: XFER
   nrfx_spim_xfer_desc_t xfer_desc = {.p_tx_buffer = m_tx_buf,
                                     .tx_length = m_tx_length,
                                     .p_rx_buffer = m_rx_buf,
                                     .rx_length = m_rx_length};
   nrfx_spim_xfer(&can_spi, &xfer_desc, 0);
 
-  while (spi_xfer_done) {
-    // if (nrf_sdh_is_enabled())
-    // {
-    //     sd_app_evt_wait();
-    // }
-    // else
-    // {
-    __WFE();
-    // }
   }
 
   for (i = 0; i < n && i < CAN_MAX_CHAR_IN_MESSAGE - 2; i++) {
@@ -231,27 +142,11 @@ void mcp2515_setRegister(const uint8_t address, const uint8_t value) {
 
   spi_xfer_done = false;
 
-  // TODO: SPI XFER
-  //   APP_ERROR_CHECK(nrf_drv_spi_transfer(&can_spi, m_tx_buf, m_length, NULL,
-  //   0));
-
-  // MARK: XFER
   nrfx_spim_xfer_desc_t xfer_desc = {.p_tx_buffer = m_tx_buf,
                                     .tx_length = m_length,
                                     .p_rx_buffer = NULL,
                                     .rx_length = 0};
   nrfx_spim_xfer(&can_spi, &xfer_desc, 0);
-
-  while (spi_xfer_done) {
-    // if (nrf_sdh_is_enabled())
-    // {
-    //     sd_app_evt_wait();
-    // }
-    // else
-    // {
-    __WFE();
-    // }
-  }
 
   mcp2515_unselect();
 }
@@ -263,8 +158,6 @@ void mcp2515_setRegisterS(const uint8_t address, const uint8_t values[],
   uint8_t tx_buf[2] = {MCP_WRITE, address};
   uint8_t m_tx_length = 2 + n * sizeof(uint8_t);
 
-  // TODO: MEMORY
-  //   uint8_t *m_tx_buf = nrf_malloc(2 + n * sizeof(uint8_t));
   uint8_t m_tx_buf[n + 2];
 
   memcpy(m_tx_buf, tx_buf,
@@ -274,30 +167,11 @@ void mcp2515_setRegisterS(const uint8_t address, const uint8_t values[],
 
   spi_xfer_done = false;
 
-  // TODO: SPI XFER
-  //   APP_ERROR_CHECK(
-  //       nrf_drv_spi_transfer(&can_spi, m_tx_buf, m_tx_length, NULL, 0));
-
-  // MARK: XFER
   nrfx_spim_xfer_desc_t xfer_desc = {.p_tx_buffer = m_tx_buf,
                                     .tx_length = m_tx_length,
                                     .p_rx_buffer = NULL,
                                     .rx_length = 0};
   nrfx_spim_xfer(&can_spi, &xfer_desc, 0);
-
-  while (spi_xfer_done) {
-    // if (nrf_sdh_is_enabled())
-    // {
-    //     sd_app_evt_wait();
-    // }
-    // else
-    // {
-    __WFE();
-    // }
-  }
-
-  // TODO: MEMORY
-  //   nrf_free(m_tx_buf);
 
   mcp2515_unselect();
 }
@@ -311,27 +185,11 @@ void mcp2515_modifyRegister(const uint8_t address, const uint8_t mask,
 
   spi_xfer_done = false;
 
-  // TODO: SPI XFER
-  //   APP_ERROR_CHECK(nrf_drv_spi_transfer(&can_spi, m_tx_buf, m_length, NULL,
-  //   0));
-
-  // MARK: XFER
   nrfx_spim_xfer_desc_t xfer_desc = {.p_tx_buffer = m_tx_buf,
                                     .tx_length = m_length,
                                     .p_rx_buffer = NULL,
                                     .rx_length = 0};
   nrfx_spim_xfer(&can_spi, &xfer_desc, 0);
-
-  while (spi_xfer_done) {
-    // if (nrf_sdh_is_enabled())
-    // {
-    //     sd_app_evt_wait();
-    // }
-    // else
-    // {
-    __WFE();
-    // }
-  }
 
   mcp2515_unselect();
 }
@@ -348,28 +206,11 @@ uint8_t mcp2515_readStatus(void) {
 
   spi_xfer_done = false;
 
-  // TODO: SPI XFER
-  //   APP_ERROR_CHECK(
-  //       nrf_drv_spi_transfer(&can_spi, m_tx_buf, m_length, m_rx_buf,
-  //       m_length));
-
-  // MARK: XFER
   nrfx_spim_xfer_desc_t xfer_desc = {.p_tx_buffer = m_tx_buf,
                                     .tx_length = m_length,
                                     .p_rx_buffer = m_rx_buf,
                                     .rx_length = m_length};
   nrfx_spim_xfer(&can_spi, &xfer_desc, 0);
-
-  while (spi_xfer_done) {
-    // if (nrf_sdh_is_enabled())
-    // {
-    //     sd_app_evt_wait();
-    // }
-    // else
-    // {
-    __WFE();
-    // }
-  }
 
   mcp2515_unselect();
 
@@ -379,29 +220,13 @@ uint8_t mcp2515_readStatus(void) {
 uint8_t mcp2515_setCANCTRL_Mode(const uint8_t newmode) {
   uint8_t i;
 
-#if MCP2515_DEBUG_MODE
-  NRFX_LOG_DEBUG("Modifying MCP_CANCTRL");
-#endif
-
   mcp2515_modifyRegister(MCP_CANCTRL, MODE_MASK, newmode);
-  // TODO: DELAY
-  // nrf_delay_ms(10);
-  NRFX_DELAY_US(10000);
 
-#if MCP2515_DEBUG_MODE
-  NRFX_LOG_DEBUG("Done Modifying MCP_CANCTRL");
-  NRFX_LOG_DEBUG("Reading MCP_CANCTRL");
-#endif
+  NRFX_DELAY_US(10000);
 
   i = mcp2515_readRegister(MCP_CANCTRL);
 
-  // TODO: DELAY
-  // nrf_delay_ms(10);
   NRFX_DELAY_US(10000);
-
-#if MCP2515_DEBUG_MODE
-  NRFX_LOG_DEBUG("Done reading MCP_CANCTRL");
-#endif
 
   i &= MODE_MASK;
 
@@ -625,64 +450,30 @@ void mcp2515_initCANBuffers(void) {
 uint8_t mcp2515_init(const uint8_t canSpeed,
                      const uint8_t clock) /* mcp2515init                  */
 {
-#if MCP2515_DEBUG_MODE
-  NRFX_LOG_DEBUG("Entering mcp2515_ini");
-#endif
-
   uint8_t res;
 
   mcp2515_reset();
 
-  // TODO: DELAY
-  // nrf_delay_ms(10);
   NRFX_DELAY_US(10000);
 
-#if MCP2515_DEBUG_MODE
-  NRFX_LOG_DEBUG("Entering CANCTRL Mode");
-#endif
-
   res = mcp2515_setCANCTRL_Mode(MODE_CONFIG);
+
   if (res > 0) {
-#if MCP2515_DEBUG_MODE
-    NRFX_LOG_DEBUG("Enter Setting Mode Fail!!!");
-#else
-
-    // TODO: DELAY
-    // nrf_delay_ms(10);
     NRFX_DELAY_US(10000);
-#endif
-
     return res;
   }
 
-#if MCP2515_DEBUG_MODE
-  NRFX_LOG_DEBUG("Enter Setting Mode Success");
-#else
-  // TODO: DELAY
-  // nrf_delay_ms(10);
   NRFX_DELAY_US(10000);
-#endif
 
   /* set baudrate                 */
   if (mcp2515_configRate(canSpeed, clock)) {
-#if MCP2515_DEBUG_MODE
-    NRFX_LOG_DEBUG("Set Rate Fail!!!");
-#else
-    // TODO: DELAY
-    // nrf_delay_ms(10);
     NRFX_DELAY_US(10000);
-#endif
 
     return res;
   }
 
-#if MCP2515_DEBUG_MODE
-  NRFX_LOG_DEBUG("Set Rate Success");
-#else
-  // TODO: DELAY
-  // nrf_delay_ms(10);
   NRFX_DELAY_US(10000);
-#endif
+
 
   if (res == MCP2515_OK) {
     mcp2515_initCANBuffers(); /* init canbuffers              */
@@ -709,24 +500,10 @@ uint8_t mcp2515_init(const uint8_t canSpeed,
 
     res = mcp2515_setCANCTRL_Mode(MODE_LOOPBACK); /* enter normal mode */
     if (res) {
-#if MCP2515_DEBUG_MODE
-      NRFX_LOG_DEBUG("Enter Normal Mode Fail!!!");
-#else
-      // TODO: DELAY
-      // nrf_delay_ms(10);
       NRFX_DELAY_US(10000);
-#endif
-
       return res;
     }
-
-#if MCP2515_DEBUG_MODE
-    NRFX_LOG_DEBUG("Enter Normal Mode Success");
-#else
-    // TODO: DELAY
-    // nrf_delay_ms(10);
     NRFX_DELAY_US(10000);
-#endif
   }
   return res;
 }
@@ -921,10 +698,6 @@ uint8_t mcp_can_begin(uint8_t speedset, const uint8_t clockset) {
   uint8_t res;
 
   res = mcp2515_init(speedset, clockset);
-
-#if MCP2515_DEBUG_MODE
-  NRFX_LOG_DEBUG("MCP2515 Speed init done");
-#endif
 
   if (res == MCP2515_OK) {
     return CAN_OK;

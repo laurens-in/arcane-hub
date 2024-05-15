@@ -51,6 +51,7 @@ target_sources(${PROJECT_NAME} PUBLIC
         ${CMAKE_CURRENT_SOURCE_DIR}/external/nrfx/drivers/src/nrfx_power.c
         ${CMAKE_CURRENT_SOURCE_DIR}/external/nrfx/drivers/src/nrfx_gpiote.c
         ${CMAKE_CURRENT_SOURCE_DIR}/external/nrfx/drivers/src/nrfx_spi.c
+        ${CMAKE_CURRENT_SOURCE_DIR}/external/nrfx/drivers/src/nrfx_spim.c
         ${CMAKE_CURRENT_SOURCE_DIR}/external/nrfx/helpers/nrfx_flag32_allocator.c
         ${CMAKE_CURRENT_SOURCE_DIR}/external/nrfx/mdk/gcc_startup_${MCU_VARIANT}.S
         ${CMAKE_CURRENT_SOURCE_DIR}/external/nrfx/mdk/system_${MCU_VARIANT}.c
@@ -96,29 +97,3 @@ add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
         WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
         COMMENT "Converting ELF to UF2"
 )
-
-# # Add the freertos_config for FreeRTOS-Kernel
-# add_library(freertos_config INTERFACE)
-
-# target_include_directories(freertos_config
-#     INTERFACE
-#     src/FreeRTOSConfig
-# )
-
-# add_subdirectory(${FREERTOS_KERNEL_PATH})
-
-
-# TinyUSB
-# add_library(tinyusb_config INTERFACE)
-# target_include_directories(tinyusb_config
-#   INTERFACE
-#   src/
-# )
-
-# target_include_directories(${PROJECT_NAME}
-#   PRIVATE
-#   external/tinyUSB/hw
-#   external/tinyUSB/src
-# )
-
-# add_subdirectory(external/tinyUSB/src)

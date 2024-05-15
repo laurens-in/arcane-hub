@@ -115,8 +115,8 @@ int main(void) {
   xTaskCreateStatic(idle_task, "idle", 128, NULL, configMAX_PRIORITIES - 10,
                     idle_task_stack, &idle_task_taskdef);
 
-  // xTaskCreateStatic(can_task, "can", 2048, NULL, configMAX_PRIORITIES-1,
-  // can_task_stack, &can_task_taskdef);
+  xTaskCreateStatic(can_task, "can", 2048, NULL, configMAX_PRIORITIES-1,
+                    can_task_stack, &can_task_taskdef);
 
   vTaskStartScheduler();
 

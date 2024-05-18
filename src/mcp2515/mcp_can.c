@@ -123,8 +123,6 @@ void mcp2515_readRegisterS(const uint8_t address, uint8_t values[],
                                     .rx_length = m_rx_length};
   nrfx_spim_xfer(&can_spi, &xfer_desc, 0);
 
-  }
-
   for (i = 0; i < n && i < CAN_MAX_CHAR_IN_MESSAGE - 2; i++) {
     values[i] = m_rx_buf[i + 2];
   }
@@ -498,7 +496,7 @@ uint8_t mcp2515_init(const uint8_t canSpeed,
     mcp2515_modifyRegister(MCP_RXB1CTRL, MCP_RXB_RX_MASK, MCP_RXB_RX_STDEXT);
 #endif
 
-    res = mcp2515_setCANCTRL_Mode(MODE_LOOPBACK); /* enter normal mode */
+    res = mcp2515_setCANCTRL_Mode(MODE_NORMAL); /* enter normal mode */
     if (res) {
       NRFX_DELAY_US(10000);
       return res;

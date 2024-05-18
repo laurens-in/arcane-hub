@@ -71,13 +71,18 @@ static uint32_t blink_interval_ms = BLINK_NOT_MOUNTED;
 
 static uint8_t led_status = 0;
 
+#define STACK_SIZE configMINIMAL_STACK_SIZE * 2
+
 void led_blinking_task(void);
 
 static void can_task(void *params);
+StackType_t can_task_stack[STACK_SIZE];
 StaticTask_t can_task_taskdef;
-StackType_t can_task_stack[2048];
 
-void midi_task(void);
+static void usbd_task(void *params);
+StackType_t usbd_stack[STACK_SIZE];
+StaticTask_t usbd_taskdef;
+
 static void idle_task(void *params);
 StackType_t idle_task_stack[128];
 StaticTask_t idle_task_taskdef;
@@ -88,6 +93,7 @@ void gpiote_irq_handler(nrfx_gpiote_pin_t pin, nrf_gpiote_polarity_t action);
 int main(void) {
 
   board_init();
+  tusb_init();
 
   nrfx_gpiote_init(1);
 
@@ -103,20 +109,16 @@ int main(void) {
       nrfx_gpiote_in_init(BUTTON_PIN, &config, gpiote_irq_handler);
   nrfx_gpiote_trigger_enable(BUTTON_PIN, true);
 
-  // init device stack on configured roothub port
-  tud_init(BOARD_TUD_RHPORT);
-
-  // init SPI / CAN
-
-  mcp_spi_init();
-  mcp_can_begin(CAN_500KBPS, MCP_8MHz);
 
   // create task
   xTaskCreateStatic(idle_task, "idle", 128, NULL, configMAX_PRIORITIES - 10,
                     idle_task_stack, &idle_task_taskdef);
 
-  xTaskCreateStatic(can_task, "can", 2048, NULL, configMAX_PRIORITIES-1,
+  xTaskCreateStatic(can_task, "can", STACK_SIZE, NULL, configMAX_PRIORITIES-2,
                     can_task_stack, &can_task_taskdef);
+
+  xTaskCreateStatic(usbd_task, "usbd", STACK_SIZE, NULL,
+                    configMAX_PRIORITIES - 1, usbd_stack, &usbd_taskdef);
 
   vTaskStartScheduler();
 
@@ -126,55 +128,40 @@ int main(void) {
   }
 }
 
-//--------------------------------------------------------------------+
-// Device callbacks
-//--------------------------------------------------------------------+
-
-// Invoked when device is mounted
-void tud_mount_cb(void) { blink_interval_ms = BLINK_MOUNTED; }
-
-// Invoked when device is unmounted
-void tud_umount_cb(void) { blink_interval_ms = BLINK_NOT_MOUNTED; }
-
-// Invoked when usb bus is suspended
-// remote_wakeup_en : if host allow us  to perform remote wakeup
-// Within 7ms, device must draw an average of current less than 2.5 mA from bus
-void tud_suspend_cb(bool remote_wakeup_en) {
-  (void)remote_wakeup_en;
-  blink_interval_ms = BLINK_SUSPENDED;
-}
-
-// Invoked when usb bus is resumed
-void tud_resume_cb(void) {
-  blink_interval_ms = tud_mounted() ? BLINK_MOUNTED : BLINK_NOT_MOUNTED;
-}
-
-void led_blinking_task(void) {
-  static uint32_t start_ms = 0;
-  static bool led_state = false;
-
-  // Blink every interval ms
-  if (board_millis() - start_ms < blink_interval_ms)
-    return; // not enough time
-  start_ms += blink_interval_ms;
-
-  board_led_write(led_state);
-  led_state = 1 - led_state; // toggle
-}
-
 void can_task(void *param) {
-  while (1) {
-    uint8_t tmp_buffer[4] = {0x11, 0x22, 0x33, 0x44};
 
-    mcp_can_send_msg(0x1, 0, 4, &tmp_buffer);
+  // init SPI / CAN
+  mcp_spi_init();
+  mcp_can_begin(CAN_500KBPS, MCP_8MHz);
+
+  for (;;) {
+    // uint8_t tmp_buffer[4] = {0x11, 0x22, 0x33, 0x44};
+
+    // mcp_can_send_msg(0x1, 0, 4, &tmp_buffer);
 
     if (CAN_MSGAVAIL == mcp_can_check_receive()) {
       uint32_t can_id;
       uint8_t buf[16];
       uint8_t len;
       mcp_can_read_msg(&can_id, &len, buf);
+      uint8_t note[3] = { buf[0] , buf[1], buf[2] };
+      tud_midi_stream_write(0, note, 3);
     }
   }
+}
+
+static void usbd_task(void *pvParameters) {
+
+    // init device stack on configured roothub port
+    // This should be called after scheduler/kernel is started.
+    // Otherwise it could cause kernel issue since USB IRQ handler does use RTOS queue API.
+    tud_init(BOARD_TUD_RHPORT);
+
+    // RTOS forever loop
+    for (;;) {
+        // put this thread to waiting state until there is new events
+        tud_task();
+    }
 }
 
 void idle_task(void *param) {
@@ -182,7 +169,8 @@ void idle_task(void *param) {
 
   // RTOS forever loop
   while (1) {
-    __WFE(); // Wait for event (low power idle)
+    // __WFE(); // Wait for event (low power idle)
+    vTaskDelay(20);
   }
 }
 

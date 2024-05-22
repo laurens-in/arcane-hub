@@ -39,6 +39,7 @@
 #include "tusb.h"
 
 #include "mcp2515/mcp_can.h"
+#include "arcane/arcane.h"
 
 /* This MIDI example send sequence of note (on/off) repeatedly. To test on PC,
  * you need to install synth software and midi connection management software.
@@ -141,11 +142,19 @@ void can_task(void *param) {
 
     if (CAN_MSGAVAIL == mcp_can_check_receive()) {
       uint32_t can_id;
-      uint8_t buf[16];
+      uint8_t ext;
       uint8_t len;
-      mcp_can_read_msg(&can_id, &len, buf);
-      uint8_t note[3] = { buf[0] , buf[1], buf[2] };
-      tud_midi_stream_write(0, note, 3);
+      uint8_t buf[8];
+      uint8_t code;
+
+      mcp_can_read_msg(&can_id, &ext, &len, buf);
+
+      code = get_func_code(can_id, ext);
+
+      if (code == FUNC_MIDI0 || code == FUNC_MIDI1 || code == FUNC_MIDI2) {
+        uint8_t note[3] = { buf[0] , buf[1], buf[2] };
+        tud_midi_stream_write(0, note, 3);
+      }
     }
   }
 }

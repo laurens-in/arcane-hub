@@ -710,14 +710,15 @@ uint8_t mcp_can_send_msg(uint32_t id, uint8_t ext, uint8_t len, uint8_t *buf) {
   return sendMsg();
 }
 
-uint8_t mcp_can_read_msg(uint32_t *ID, uint8_t *len, uint8_t buf[]) {
+uint8_t mcp_can_read_msg(uint32_t *id, uint8_t *ext, uint8_t *len, uint8_t buf[8]) {
   uint8_t rc;
 
   rc = readMsg();
 
   if (rc == CAN_OK) {
     *len = m_mcp_can.m_len;
-    *ID = m_mcp_can.m_id;
+    *id = m_mcp_can.m_id;
+    *ext = m_mcp_can.m_ext_flag;
 
     for (int i = 0; i < m_mcp_can.m_len && i < MAX_CHAR_IN_MESSAGE; i++) {
       buf[i] = m_mcp_can.m_data[i];

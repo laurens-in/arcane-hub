@@ -33,7 +33,7 @@ void mcp_can_setcs(uint8_t cs);
 void mcp_spi_init(void);
 uint8_t mcp_can_begin(uint8_t speedset, const uint8_t clockset);
 uint8_t mcp_can_send_msg(uint32_t id, uint8_t ext, uint8_t len, uint8_t *buf);
-uint8_t mcp_can_read_msg(uint32_t *id, uint8_t *len, uint8_t buf[]);
+uint8_t mcp_can_read_msg(uint32_t *id, uint8_t *ext, uint8_t *len, uint8_t buf[8]);
 uint8_t mcp_can_check_receive(void);
 uint8_t mcp_can_check_error(void);
 

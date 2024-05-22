@@ -39,6 +39,7 @@ target_sources(${PROJECT_NAME} PUBLIC
         ${CMAKE_CURRENT_SOURCE_DIR}/src/freertos_hook.c
         ${CMAKE_CURRENT_SOURCE_DIR}/src/usb_descriptors.c
         ${CMAKE_CURRENT_SOURCE_DIR}/src/mcp2515/mcp_can.c
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/arcane/arcane.c
         ${CMAKE_CURRENT_SOURCE_DIR}/external/tinyUSB/src/tusb.c
         ${CMAKE_CURRENT_SOURCE_DIR}/external/tinyUSB/src/device/usbd.c
         ${CMAKE_CURRENT_SOURCE_DIR}/external/tinyUSB/src/device/usbd_control.c
@@ -68,6 +69,7 @@ target_include_directories(${PROJECT_NAME} PUBLIC
         ${CMAKE_CURRENT_SOURCE_DIR}/src
         ${CMAKE_CURRENT_SOURCE_DIR}/src/FreeRTOSConfig
         ${CMAKE_CURRENT_SOURCE_DIR}/src/mcp2515
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/arcane
         ${CMAKE_CURRENT_SOURCE_DIR}/external/tinyUSB/hw
         ${CMAKE_CURRENT_SOURCE_DIR}/external/tinyUSB/hw/bsp/nrf
         ${CMAKE_CURRENT_SOURCE_DIR}/external/tinyUSB/hw/bsp/nrf/boards/feather_nrf52840_express

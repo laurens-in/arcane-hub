@@ -26,6 +26,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <limits.h>
 
 #include "nrfx_gpiote.h"
 
@@ -41,24 +42,6 @@
 #include "mcp2515/mcp_can.h"
 #include "arcane/arcane.h"
 
-/* This MIDI example send sequence of note (on/off) repeatedly. To test on PC,
- * you need to install synth software and midi connection management software.
- * On
- * - Linux (Ubuntu): install qsynth, qjackctl. Then connect TinyUSB output port
- * to FLUID Synth input port
- * - Windows: install MIDI-OX
- * - MacOS: SimpleSynth
- */
-
-//--------------------------------------------------------------------+
-// MACRO CONSTANT TYPEDEF PROTYPES
-//--------------------------------------------------------------------+
-
-/* Blink pattern
- * - 250 ms  : device not mounted
- * - 1000 ms : device mounted
- * - 2500 ms : device is suspended
- */
 enum {
   BLINK_NOT_MOUNTED = 250,
   BLINK_MOUNTED = 1000,
@@ -76,9 +59,14 @@ static uint8_t led_status = 0;
 
 void led_blinking_task(void);
 
-static void can_task(void *params);
-StackType_t can_task_stack[STACK_SIZE];
-StaticTask_t can_task_taskdef;
+static void can_read_task(void *params);
+StackType_t can_read_task_stack[STACK_SIZE];
+StaticTask_t can_read_task_taskdef;
+
+static void can_write_task(void *params);
+StackType_t can_write_task_stack[STACK_SIZE];
+StaticTask_t can_write_task_taskdef;
+TaskHandle_t can_write_task_handle;
 
 static void usbd_task(void *params);
 StackType_t usbd_stack[STACK_SIZE];
@@ -115,8 +103,11 @@ int main(void) {
   xTaskCreateStatic(idle_task, "idle", 128, NULL, configMAX_PRIORITIES - 10,
                     idle_task_stack, &idle_task_taskdef);
 
-  xTaskCreateStatic(can_task, "can", STACK_SIZE, NULL, configMAX_PRIORITIES-2,
-                    can_task_stack, &can_task_taskdef);
+  xTaskCreateStatic(can_read_task, "can_read", STACK_SIZE, NULL, configMAX_PRIORITIES-2,
+                    can_read_task_stack, &can_read_task_taskdef);
+
+  can_write_task_handle = xTaskCreateStatic(can_write_task, "can_write", STACK_SIZE, NULL, configMAX_PRIORITIES-2,
+                    can_write_task_stack, &can_write_task_taskdef);
 
   xTaskCreateStatic(usbd_task, "usbd", STACK_SIZE, NULL,
                     configMAX_PRIORITIES - 1, usbd_stack, &usbd_taskdef);
@@ -129,17 +120,13 @@ int main(void) {
   }
 }
 
-void can_task(void *param) {
+void can_read_task(void *param) {
 
   // init SPI / CAN
   mcp_spi_init();
   mcp_can_begin(CAN_500KBPS, MCP_8MHz);
 
   for (;;) {
-    // uint8_t tmp_buffer[4] = {0x11, 0x22, 0x33, 0x44};
-
-    // mcp_can_send_msg(0x1, 0, 4, &tmp_buffer);
-
     if (CAN_MSGAVAIL == mcp_can_check_receive()) {
       uint32_t can_id;
       uint8_t ext;
@@ -158,6 +145,22 @@ void can_task(void *param) {
     }
   }
 }
+
+void can_write_task(void *param) {
+  uint32_t ulNotifiedValue;
+
+  for (;;) {
+    xTaskNotifyWait(pdFALSE, ULONG_MAX, &ulNotifiedValue, portMAX_DELAY);
+      // Toggle LED when the button is pressed
+    led_status = led_status == 0 ? 1 : 0;
+    uint8_t tmp_buffer[4] = {0x01, 0x02, 0x03, 0x04};
+    uint8_t code = mcp_can_send_msg(0b10000000001, 0, 4, tmp_buffer);
+    board_led_write(led_status);
+
+    vTaskDelay(20);
+  }
+}
+
 
 static void usbd_task(void *pvParameters) {
 
@@ -184,7 +187,10 @@ void idle_task(void *param) {
 }
 
 void gpiote_irq_handler(nrfx_gpiote_pin_t pin, nrf_gpiote_polarity_t action) {
-  // Toggle LED when the button is pressed
-  led_status = led_status == 0 ? 1 : 0;
-  board_led_write(led_status);
+  BaseType_t xHigherPriorityTaskWoken = pdFALSE;
+  
+  xTaskNotifyFromISR(can_write_task_handle, 0x00, eSetBits,
+                &xHigherPriorityTaskWoken);
+
+  portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
 }

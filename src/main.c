@@ -122,7 +122,6 @@ int main(void) {
 
 void can_read_task(void *param) {
 
-  // init SPI / CAN
   mcp_spi_init();
   mcp_can_begin(CAN_500KBPS, MCP_8MHz);
 
@@ -147,14 +146,12 @@ void can_read_task(void *param) {
 }
 
 void can_write_task(void *param) {
-  uint32_t ulNotifiedValue;
-
   for (;;) {
-    xTaskNotifyWait(pdFALSE, ULONG_MAX, &ulNotifiedValue, portMAX_DELAY);
+    xTaskNotifyWait(pdFALSE, ULONG_MAX, NULL, portMAX_DELAY);
       // Toggle LED when the button is pressed
     led_status = led_status == 0 ? 1 : 0;
     uint8_t tmp_buffer[4] = {0x01, 0x02, 0x03, 0x04};
-    uint8_t code = mcp_can_send_msg(0b10000000001, 0, 4, tmp_buffer);
+    uint8_t code = mcp_can_send_msg(FUNC_CFGW || 0x01, 0, 4, tmp_buffer);
     board_led_write(led_status);
 
     vTaskDelay(20);
@@ -189,7 +186,7 @@ void idle_task(void *param) {
 void gpiote_irq_handler(nrfx_gpiote_pin_t pin, nrf_gpiote_polarity_t action) {
   BaseType_t xHigherPriorityTaskWoken = pdFALSE;
   
-  xTaskNotifyFromISR(can_write_task_handle, 0x00, eSetBits,
+  xTaskNotifyFromISR(can_write_task_handle, 0, eNoAction,
                 &xHigherPriorityTaskWoken);
 
   portYIELD_FROM_ISR(xHigherPriorityTaskWoken);

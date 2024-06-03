@@ -45,6 +45,7 @@ target_sources(${PROJECT_NAME} PUBLIC
         ${CMAKE_CURRENT_SOURCE_DIR}/external/tinyUSB/src/device/usbd_control.c
         ${CMAKE_CURRENT_SOURCE_DIR}/external/tinyUSB/src/class/audio/audio_device.c
         ${CMAKE_CURRENT_SOURCE_DIR}/external/tinyUSB/src/class/midi/midi_device.c
+        ${CMAKE_CURRENT_SOURCE_DIR}/external/tinyUSB/src/class/cdc/cdc_device.c
         ${CMAKE_CURRENT_SOURCE_DIR}/external/tinyUSB/src/common/tusb_fifo.c
         ${CMAKE_CURRENT_SOURCE_DIR}/external/tinyUSB/hw/bsp/nrf/family.c
         ${CMAKE_CURRENT_SOURCE_DIR}/external/tinyUSB/src/portable/nordic/nrf5x/dcd_nrf5x.c
@@ -61,7 +62,6 @@ target_sources(${PROJECT_NAME} PUBLIC
         ${CMAKE_CURRENT_SOURCE_DIR}/external/FreeRTOS/list.c
         ${CMAKE_CURRENT_SOURCE_DIR}/external/FreeRTOS/timers.c
         ${CMAKE_CURRENT_SOURCE_DIR}/external/FreeRTOS/portable/GCC/ARM_CM4F/port.c
-        # ${CMAKE_CURRENT_SOURCE_DIR}/external/FreeRTOS/portable/MemMang/heap_3.c
 )
 
 # includes
@@ -74,6 +74,7 @@ target_include_directories(${PROJECT_NAME} PUBLIC
         ${CMAKE_CURRENT_SOURCE_DIR}/external/tinyUSB/hw/bsp/nrf
         ${CMAKE_CURRENT_SOURCE_DIR}/external/tinyUSB/hw/bsp/nrf/boards/feather_nrf52840_express
         ${CMAKE_CURRENT_SOURCE_DIR}/external/tinyUSB/src
+        ${CMAKE_CURRENT_SOURCE_DIR}/external/tinyUSB/src/class/cdc/
         ${CMAKE_CURRENT_SOURCE_DIR}/external/nrfx
         ${CMAKE_CURRENT_SOURCE_DIR}/external/nrfx/drivers/src
         ${CMAKE_CURRENT_SOURCE_DIR}/external/nrfx/drivers/include

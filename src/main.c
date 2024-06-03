@@ -68,6 +68,10 @@ StackType_t can_write_task_stack[STACK_SIZE];
 StaticTask_t can_write_task_taskdef;
 TaskHandle_t can_write_task_handle;
 
+static void cdc_task(void *params);
+StackType_t cdc_task_stack[128];
+StaticTask_t cdc_task_taskdef;
+
 static void usbd_task(void *params);
 StackType_t usbd_stack[STACK_SIZE];
 StaticTask_t usbd_taskdef;
@@ -111,6 +115,10 @@ int main(void) {
 
   xTaskCreateStatic(usbd_task, "usbd", STACK_SIZE, NULL,
                     configMAX_PRIORITIES - 1, usbd_stack, &usbd_taskdef);
+
+  xTaskCreateStatic(cdc_task, "cdc", STACK_SIZE, NULL,
+                    configMAX_PRIORITIES - 3, cdc_task_stack, &cdc_task_taskdef);
+
 
   vTaskStartScheduler();
 
@@ -190,4 +198,62 @@ void gpiote_irq_handler(nrfx_gpiote_pin_t pin, nrf_gpiote_polarity_t action) {
                 &xHigherPriorityTaskWoken);
 
   portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
+}
+
+
+// CDC
+
+// send characters to both CDC and WebUSB
+void echo_all(uint8_t buf[], uint32_t count)
+{
+  // echo to cdc
+  if ( tud_cdc_connected() )
+  {
+    for(uint32_t i=0; i<count; i++)
+    {
+      tud_cdc_write_char(buf[i]);
+
+      if ( buf[i] == '\r' ) tud_cdc_write_char('\n');
+    }
+    tud_cdc_write_flush();
+  }
+}
+
+
+static void cdc_task(void *params)
+{
+  for(;;){
+    if ( tud_cdc_connected() )
+    {
+      // connected and there are data available
+      if ( tud_cdc_available() )
+      {
+        uint8_t buf[64];
+
+        uint32_t count = tud_cdc_read(buf, sizeof(buf));
+
+        // echo back to both web serial and cdc
+        echo_all(buf, count);
+      }
+    }
+  }
+}
+
+// Invoked when cdc when line state changed e.g connected/disconnected
+void tud_cdc_line_state_cb(uint8_t itf, bool dtr, bool rts)
+{
+  (void) itf;
+
+  // connected
+  if ( dtr && rts )
+  {
+    // print initial message when connected
+    tud_cdc_write_str("\r\nWelcome to the ARCANE cli interface!\r\n");
+  }
+}
+
+// Invoked when CDC interface received data from host
+void tud_cdc_rx_cb(uint8_t itf)
+{
+  (void) itf;
 }

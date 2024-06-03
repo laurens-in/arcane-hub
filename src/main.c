@@ -123,7 +123,7 @@ int main(void) {
 void can_read_task(void *param) {
 
   mcp_spi_init();
-  mcp_can_begin(CAN_500KBPS, MCP_8MHz);
+  mcp_can_begin(CAN_1000KBPS, MCP_16MHz);
 
   for (;;) {
     if (CAN_MSGAVAIL == mcp_can_check_receive()) {

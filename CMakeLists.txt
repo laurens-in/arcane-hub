@@ -1,39 +1,111 @@
 cmake_minimum_required(VERSION 3.20.0)
-
+# Set toolchain file before the project command
+set(CMAKE_TOOLCHAIN_FILE ${CMAKE_CURRENT_SOURCE_DIR}/cmake/toolchain/arm_gcc.cmake)
 project(
-	arcane
-	VERSION 1.0
-	LANGUAGES C ASM
+    arcane
+    VERSION 1.0
+    LANGUAGES C ASM
 )
-
-set(CMAKE_C_COMPILER "arm-none-eabi-gcc")
-set(CMAKE_ASM_COMPILER "arm-none-eabi-gcc")
 
 set(MCU_VARIANT nrf52840)
 set(LD_FILE ${CMAKE_CURRENT_SOURCE_DIR}/linker/${MCU_VARIANT}.ld)
-set(CMAKE_TOOLCHAIN_FILE ${CMAKE_CURRENT_SOURCE_DIR}/cmake/toolchain/arm_gcc.cmake)
 set(CMAKE_EXECUTABLE_SUFFIX .elf)
 set(CMAKE_SYSTEM_PROCESSOR cortex-m4 CACHE INTERNAL "System Processor")
 
 add_executable(${PROJECT_NAME})
 
 target_link_options(${PROJECT_NAME} PUBLIC
-        "LINKER:--script=${LD_FILE}"
-        -L${CMAKE_CURRENT_LIST_DIR}/external/nrfx/mdk
-        --specs=nosys.specs --specs=nano.specs
+    "LINKER:--script=${LD_FILE}"
+    -L${CMAKE_CURRENT_LIST_DIR}/external/nrfx/mdk
+    --specs=nosys.specs --specs=nano.specs
 )
 
 set(SD_NAME s140)
 set(DFU_DEV_REV 52840)
+
 target_compile_definitions(${PROJECT_NAME} PUBLIC
-        NRF52840_XXAA
-        S140
+    NRF52840_XXAA
+    S140
 )
 
-set(FREERTOS_KERNEL_PATH ${CMAKE_CURRENT_SOURCE_DIR}/external/FreeRTOS)
-set(FREERTOS_PORT GCC_ARM_CM4F CACHE STRING "")
+# # Create an interface library for external dependencies
+# add_library(external_libs INTERFACE)
 
-# sources
+# # Set include directories for external libraries (only for external_libs)
+# target_include_directories(external_libs INTERFACE
+#     ${CMAKE_CURRENT_SOURCE_DIR}/external/tinyUSB/hw
+#     ${CMAKE_CURRENT_SOURCE_DIR}/external/tinyUSB/hw/bsp/nrf
+#     ${CMAKE_CURRENT_SOURCE_DIR}/external/tinyUSB/hw/bsp/nrf/boards/feather_nrf52840_express
+#     ${CMAKE_CURRENT_SOURCE_DIR}/external/tinyUSB/src
+#     ${CMAKE_CURRENT_SOURCE_DIR}/external/tinyUSB/src/class/cdc/
+#     ${CMAKE_CURRENT_SOURCE_DIR}/external/nrfx
+#     ${CMAKE_CURRENT_SOURCE_DIR}/external/nrfx/drivers/src
+#     ${CMAKE_CURRENT_SOURCE_DIR}/external/nrfx/drivers/include
+#     ${CMAKE_CURRENT_SOURCE_DIR}/external/nrfx/hal
+#     ${CMAKE_CURRENT_SOURCE_DIR}/external/nrfx/mdk
+#     ${CMAKE_CURRENT_SOURCE_DIR}/external/nrfx/helpers
+#     ${CMAKE_CURRENT_SOURCE_DIR}/external/CMSIS_5/CMSIS/Core/Include
+#     ${CMAKE_CURRENT_SOURCE_DIR}/external/FreeRTOS/include
+#     ${CMAKE_CURRENT_SOURCE_DIR}/external/FreeRTOS/portable/GCC/ARM_CM4F
+# )
+
+# # Set sources for external libraries (only for external_libs)
+# target_sources(external_libs INTERFACE
+#     ${CMAKE_CURRENT_SOURCE_DIR}/external/tinyUSB/src/tusb.c
+#     ${CMAKE_CURRENT_SOURCE_DIR}/external/tinyUSB/src/device/usbd.c
+#     ${CMAKE_CURRENT_SOURCE_DIR}/external/tinyUSB/src/device/usbd_control.c
+#     ${CMAKE_CURRENT_SOURCE_DIR}/external/tinyUSB/src/class/audio/audio_device.c
+#     ${CMAKE_CURRENT_SOURCE_DIR}/external/tinyUSB/src/class/midi/midi_device.c
+#     ${CMAKE_CURRENT_SOURCE_DIR}/external/tinyUSB/src/class/cdc/cdc_device.c
+#     ${CMAKE_CURRENT_SOURCE_DIR}/external/tinyUSB/src/common/tusb_fifo.c
+#     ${CMAKE_CURRENT_SOURCE_DIR}/external/tinyUSB/hw/bsp/nrf/family.c
+#     ${CMAKE_CURRENT_SOURCE_DIR}/external/tinyUSB/src/portable/nordic/nrf5x/dcd_nrf5x.c
+#     ${CMAKE_CURRENT_SOURCE_DIR}/external/nrfx/drivers/src/nrfx_uarte.c
+#     ${CMAKE_CURRENT_SOURCE_DIR}/external/nrfx/drivers/src/nrfx_power.c
+#     ${CMAKE_CURRENT_SOURCE_DIR}/external/nrfx/drivers/src/nrfx_gpiote.c
+#     ${CMAKE_CURRENT_SOURCE_DIR}/external/nrfx/drivers/src/nrfx_spi.c
+#     ${CMAKE_CURRENT_SOURCE_DIR}/external/nrfx/drivers/src/nrfx_spim.c
+#     ${CMAKE_CURRENT_SOURCE_DIR}/external/nrfx/helpers/nrfx_flag32_allocator.c
+#     ${CMAKE_CURRENT_SOURCE_DIR}/external/nrfx/mdk/gcc_startup_${MCU_VARIANT}.S
+#     ${CMAKE_CURRENT_SOURCE_DIR}/external/nrfx/mdk/system_${MCU_VARIANT}.c
+#     ${CMAKE_CURRENT_SOURCE_DIR}/external/FreeRTOS/tasks.c
+#     ${CMAKE_CURRENT_SOURCE_DIR}/external/FreeRTOS/queue.c
+#     ${CMAKE_CURRENT_SOURCE_DIR}/external/FreeRTOS/list.c
+#     ${CMAKE_CURRENT_SOURCE_DIR}/external/FreeRTOS/timers.c
+#     ${CMAKE_CURRENT_SOURCE_DIR}/external/FreeRTOS/portable/GCC/ARM_CM4F/port.c
+# )
+
+# # Suppress specific warnings for external libraries
+# target_compile_options(external_libs INTERFACE
+#     -Wno-unused-parameter
+#     -Wno-unused-variable
+# )
+
+# # sources for the main project
+# target_sources(${PROJECT_NAME} PUBLIC
+#     ${CMAKE_CURRENT_SOURCE_DIR}/src/main.c
+#     ${CMAKE_CURRENT_SOURCE_DIR}/src/arcane.c
+#     ${CMAKE_CURRENT_SOURCE_DIR}/src/board.c
+#     ${CMAKE_CURRENT_SOURCE_DIR}/src/cdc.c
+#     ${CMAKE_CURRENT_SOURCE_DIR}/src/freertos_hook.c
+#     ${CMAKE_CURRENT_SOURCE_DIR}/src/tasks.c
+#     ${CMAKE_CURRENT_SOURCE_DIR}/src/usb_descriptors.c
+#     ${CMAKE_CURRENT_SOURCE_DIR}/drivers/mcp2515/src/mcp_can.c
+# )
+
+# # includes for the main project
+# target_include_directories(${PROJECT_NAME} PUBLIC
+#     ${CMAKE_CURRENT_SOURCE_DIR}/src
+#     ${CMAKE_CURRENT_SOURCE_DIR}/include
+#     ${CMAKE_CURRENT_SOURCE_DIR}/include/FreeRTOSConfig
+#     ${CMAKE_CURRENT_SOURCE_DIR}/include/nrfx
+#     ${CMAKE_CURRENT_SOURCE_DIR}/include/tinyUSB
+#     ${CMAKE_CURRENT_SOURCE_DIR}/drivers/mcp2515/include
+# )
+
+# # Link external libraries to the main project
+# target_link_libraries(${PROJECT_NAME} PUBLIC external_libs)
+
 target_sources(${PROJECT_NAME} PUBLIC
         ${CMAKE_CURRENT_SOURCE_DIR}/src/main.c
         ${CMAKE_CURRENT_SOURCE_DIR}/src/arcane.c
@@ -91,17 +163,12 @@ target_include_directories(${PROJECT_NAME} PUBLIC
         ${CMAKE_CURRENT_SOURCE_DIR}/external/FreeRTOS/portable/GCC/ARM_CM4F
 )
 
-# TODO: remove and fix in toolchain
-set(CMAKE_C_FLAGS
-        "-mthumb -mcpu=cortex-m4 -mfloat-abi=hard -mfpu=fpv4-sp-d16 -g"
-)
 
 # Convert to uf2
-set(CMAKE_OBJCOPY /usr/lib/arm-none-eabi/bin/objcopy)
-
+find_program(OBJCOPY arm-none-eabi-objcopy)
 add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
-        COMMAND ${CMAKE_OBJCOPY} -Obinary $<TARGET_FILE:${PROJECT_NAME}> $<TARGET_FILE_DIR:${PROJECT_NAME}>/${PROJECT_NAME}.bin
-        COMMAND python3 ${CMAKE_CURRENT_SOURCE_DIR}/external/uf2/utils/uf2conv.py -f 0xADA52840 --base 0x26000 ${PROJECT_NAME}.bin -c -o ${PROJECT_NAME}.uf2
-        WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
-        COMMENT "Converting ELF to UF2"
+    COMMAND ${OBJCOPY} -Obinary $<TARGET_FILE:${PROJECT_NAME}> $<TARGET_FILE_DIR:${PROJECT_NAME}>/${PROJECT_NAME}.bin
+    COMMAND python3 ${CMAKE_CURRENT_SOURCE_DIR}/external/uf2/utils/uf2conv.py -f 0xADA52840 --base 0x26000 ${PROJECT_NAME}.bin -c -o ${PROJECT_NAME}.uf2
+    WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+    COMMENT "Converting ELF to UF2"
 )

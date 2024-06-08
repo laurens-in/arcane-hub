@@ -1,4 +1,3 @@
-#include <stdint.h>
 #include "arcane.h"
 
 uint8_t get_func_code(uint32_t id, uint8_t ext) {

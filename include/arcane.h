@@ -1,4 +1,8 @@
-// ARCANE function codes
+#ifndef ARCANE_H
+#define ARCANE_H
+
+#include <stdint.h>
+
 #define FUNC_NMT     0b0000
 #define FUNC_MIDI0   0b0001
 #define FUNC_MIDI1   0b0010
@@ -10,3 +14,5 @@
 #define NMT_ON       0b0001
 
 uint8_t get_func_code(uint32_t id, uint8_t ext);
+
+#endif /* ARCANE_H */

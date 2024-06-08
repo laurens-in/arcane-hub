@@ -1,7 +1,5 @@
 #include "tusb.h"
 
-// CDC
-
 // send characters to CDC 
 void echo_all(uint8_t buf[], uint32_t count)
 {
@@ -17,7 +15,6 @@ void echo_all(uint8_t buf[], uint32_t count)
     tud_cdc_write_flush();
   }
 }
-
 
 // Invoked when cdc when line state changed e.g connected/disconnected
 void tud_cdc_line_state_cb(uint8_t itf, bool dtr, bool rts)

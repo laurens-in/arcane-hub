@@ -1,17 +1,10 @@
 #ifndef _MCP2515_H_
 #define _MCP2515_H_
 
-// #include "nrf_delay.h"
-#include "nrf_gpio.h"
-// #include "app_error.h"
-// #include "app_util_platform.h"
-#include "nrf_spi.h"
-// #include "bsp.h"
-// #include "app_timer.h"
-#include "nrf_common.h"
+#include "nrfx_gpiote.h"
 #include "mcp_can_dfs.h"
 
-#define SPI_SS_PIN					NRF_GPIO_PIN_MAP(1,8)
+#define SPI_SS_PIN					NRF_GPIO_PIN_MAP(1,8) // TODO: remove maybe
 #define SPI_SCK_PIN					NRF_GPIO_PIN_MAP(0,14)
 #define SPI_MOSI_PIN				NRF_GPIO_PIN_MAP(0,13)
 #define SPI_MISO_PIN				NRF_GPIO_PIN_MAP(0,15)

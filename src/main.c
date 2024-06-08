@@ -23,29 +23,42 @@
  *
  */
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <limits.h>
 
 #include "nrfx_gpiote.h"
 
-#include "FreeRTOS.h"
-#include "queue.h"
-#include "semphr.h"
-#include "task.h"
-#include "timers.h"
+// #include "FreeRTOS.h"
+// #include "queue.h"
+// #include "semphr.h"
+// #include "task.h"
+// #include "timers.h"
+
 
 #include "bsp/board_api.h" // TODO: remove
 #include "tusb.h"
 
-#include "mcp_can.h"
-#include "arcane.h"
 #include "tasks.h"
-
 
 #define _PINNUM(port, pin) ((port) * 32 + (pin))
 #define BUTTON_PIN NRF_GPIO_PIN_MAP(1, 02)
+
+#define STACK_SIZE configMINIMAL_STACK_SIZE * 2
+
+StackType_t can_read_task_stack[STACK_SIZE];
+StaticTask_t can_read_task_taskdef;
+
+StackType_t can_write_task_stack[STACK_SIZE];
+StaticTask_t can_write_task_taskdef;
+TaskHandle_t can_write_task_handle;
+
+StackType_t cdc_task_stack[STACK_SIZE];
+StaticTask_t cdc_task_taskdef;
+
+StackType_t usbd_stack[STACK_SIZE];
+StaticTask_t usbd_taskdef;
+
+StackType_t idle_task_stack[128];
+StaticTask_t idle_task_taskdef;
+
 
 
 void gpiote_irq_handler(nrfx_gpiote_pin_t pin, nrf_gpiote_polarity_t action);
@@ -55,6 +68,7 @@ int main(void) {
 
   board_init();
   tusb_init();
+  uint8_t code = 1;
 
   nrfx_gpiote_init(1);
 

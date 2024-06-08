@@ -1,13 +1,7 @@
 #include <string.h>
 
 #include "mcp_can.h"
-#include "nrf_common.h"
-#include "nrf_gpio.h"
-#include "nrf_spim.h"
 #include "nrfx_spim.h"
-#include "nrf_spi.h"
-#include "nrfx_spi.h"
-
 #include "nrfx_gpiote.h"
 
 static volatile bool spi_xfer_done = true;
@@ -44,13 +38,13 @@ void mcp_spi_init() {
 
   nrfx_gpiote_in_event_enable(MCP2515_PIN_INT, true);
 
-  nrfx_spim_config_t spi_config = NRFX_SPIM_DEFAULT_CONFIG(
+  nrfx_spim_config_t spim_config = NRFX_SPIM_DEFAULT_CONFIG(
       SPI_SCK_PIN, SPI_MOSI_PIN, SPI_MISO_PIN, SPI_SS_PIN);
-  spi_config.frequency = NRF_SPI_FREQ_125K;
-  spi_config.mode = NRF_SPI_MODE_0;
-  spi_config.bit_order = NRF_SPI_BIT_ORDER_MSB_FIRST;
+  spim_config.frequency = NRF_SPIM_FREQ_125K;
+  spim_config.mode = NRF_SPIM_MODE_0;
+  spim_config.bit_order = NRF_SPIM_BIT_ORDER_MSB_FIRST;
 
-  err_code = nrfx_spim_init(&can_spi, &spi_config, NULL, NULL);
+  err_code = nrfx_spim_init(&can_spi, &spim_config, NULL, NULL);
 }
 
 void mcp2515_select() { nrf_gpio_pin_clear(m_mcp_can.m_cs); }

@@ -69,7 +69,7 @@ StaticTask_t can_write_task_taskdef;
 TaskHandle_t can_write_task_handle;
 
 static void cdc_task(void *params);
-StackType_t cdc_task_stack[128];
+StackType_t cdc_task_stack[STACK_SIZE];
 StaticTask_t cdc_task_taskdef;
 
 static void usbd_task(void *params);
@@ -113,11 +113,12 @@ int main(void) {
   can_write_task_handle = xTaskCreateStatic(can_write_task, "can_write", STACK_SIZE, NULL, configMAX_PRIORITIES-2,
                     can_write_task_stack, &can_write_task_taskdef);
 
+  xTaskCreateStatic(cdc_task, "cdc", STACK_SIZE, NULL,
+                    configMAX_PRIORITIES - 2, cdc_task_stack, &cdc_task_taskdef);
+                    
   xTaskCreateStatic(usbd_task, "usbd", STACK_SIZE, NULL,
                     configMAX_PRIORITIES - 1, usbd_stack, &usbd_taskdef);
 
-  xTaskCreateStatic(cdc_task, "cdc", STACK_SIZE, NULL,
-                    configMAX_PRIORITIES - 3, cdc_task_stack, &cdc_task_taskdef);
 
 
   vTaskStartScheduler();
@@ -130,6 +131,7 @@ int main(void) {
 
 void can_read_task(void *param) {
 
+  // must be done after scheduler is started
   mcp_spi_init();
   mcp_can_begin(CAN_1000KBPS, MCP_16MHz);
 
@@ -139,11 +141,10 @@ void can_read_task(void *param) {
       uint8_t ext;
       uint8_t len;
       uint8_t buf[8];
-      uint8_t code;
 
       mcp_can_read_msg(&can_id, &ext, &len, buf);
 
-      code = get_func_code(can_id, ext);
+      uint8_t code = get_func_code(can_id, ext);
 
       if (code == FUNC_MIDI0 || code == FUNC_MIDI1 || code == FUNC_MIDI2) {
         uint8_t note[3] = { buf[0] , buf[1], buf[2] };
@@ -228,12 +229,20 @@ static void cdc_task(void *params)
       // connected and there are data available
       if ( tud_cdc_available() )
       {
-        uint8_t buf[64];
+        // [read/write, node_id, param_id, length, data 0-8]
+        uint8_t buf[12];
 
         uint32_t count = tud_cdc_read(buf, sizeof(buf));
 
-        // echo back to both web serial and cdc
-        echo_all(buf, count);
+        uint8_t data[buf[4]];
+
+        memcpy(data, buf, buf[4]);
+
+        uint8_t code = mcp_can_send_msg(FUNC_CFGW || 0x01, 0, buf[4], data);
+        
+
+        // echo back to both cdc
+        // echo_all(buf, count);
       }
     }
   }

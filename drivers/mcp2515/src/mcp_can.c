@@ -18,25 +18,23 @@ static const nrfx_spim_t can_spi =
 void mcp2515_int_pin_handler(nrfx_gpiote_pin_t pin,
                              nrf_gpiote_polarity_t action) {
   if (nrf_gpio_pin_read(pin)) {
-    nrf_gpio_pin_set(BSP_LED_3);
+    nrf_gpio_pin_set(MCP_LED_INT);
   } else {
-    nrf_gpio_pin_clear(BSP_LED_3);
+    nrf_gpio_pin_clear(MCP_LED_INT);
   }
 }
 
 void mcp_spi_init() {
-  nrfx_err_t err_code = NRFX_SUCCESS;
-
   mcp_can_setcs(SPI_SS_PIN);
 
-  nrf_gpio_cfg_input(MCP2515_PIN_INT, NRF_GPIO_PIN_NOPULL);
+  nrf_gpio_cfg_input(MCP_PIN_INT, NRF_GPIO_PIN_NOPULL);
   nrfx_gpiote_in_config_t mcp2515_int_config =
       NRFX_GPIOTE_CONFIG_IN_SENSE_TOGGLE(true);
 
-  err_code = nrfx_gpiote_in_init(MCP2515_PIN_INT, &mcp2515_int_config,
+  nrfx_gpiote_in_init(MCP_PIN_INT, &mcp2515_int_config,
                                  mcp2515_int_pin_handler);
 
-  nrfx_gpiote_in_event_enable(MCP2515_PIN_INT, true);
+  nrfx_gpiote_in_event_enable(MCP_PIN_INT, true);
 
   nrfx_spim_config_t spim_config = NRFX_SPIM_DEFAULT_CONFIG(
       SPI_SCK_PIN, SPI_MOSI_PIN, SPI_MISO_PIN, SPI_SS_PIN);
@@ -44,7 +42,7 @@ void mcp_spi_init() {
   spim_config.mode = NRF_SPIM_MODE_0;
   spim_config.bit_order = NRF_SPIM_BIT_ORDER_MSB_FIRST;
 
-  err_code = nrfx_spim_init(&can_spi, &spim_config, NULL, NULL);
+  nrfx_spim_init(&can_spi, &spim_config, NULL, NULL);
 }
 
 void mcp2515_select() { nrf_gpio_pin_clear(m_mcp_can.m_cs); }
@@ -52,8 +50,6 @@ void mcp2515_select() { nrf_gpio_pin_clear(m_mcp_can.m_cs); }
 void mcp2515_unselect() { nrf_gpio_pin_set(m_mcp_can.m_cs); }
 
 void mcp2515_reset() {
-  nrfx_err_t err_code = NRFX_SUCCESS;
-
   mcp2515_select();
 
   uint8_t m_tx_buf[1] = {MCP_RESET};
@@ -65,7 +61,7 @@ void mcp2515_reset() {
                                     .tx_length = m_length,
                                     .p_rx_buffer = NULL,
                                     .rx_length = 0};
-  err_code = nrfx_spim_xfer(&can_spi, &xfer_desc, 0);
+  nrfx_spim_xfer(&can_spi, &xfer_desc, 0);
 
   mcp2515_unselect();
 }
@@ -559,13 +555,13 @@ void mcp2515_write_canMsg(const uint8_t buffer_sidh_addr) {
 
 void mcp2515_read_canMsg(const uint8_t buffer_sidh_addr) /* read can msg */
 {
-  uint8_t mcp_addr, ctrl;
+  uint8_t mcp_addr;
 
   mcp_addr = buffer_sidh_addr;
 
   mcp2515_read_id(mcp_addr, &m_mcp_can.m_ext_flag, &m_mcp_can.m_id);
 
-  ctrl = mcp2515_readRegister(mcp_addr - 1);
+  mcp2515_readRegister(mcp_addr - 1);
   m_mcp_can.m_len = mcp2515_readRegister(mcp_addr + 4);
 
   m_mcp_can.m_len &= MCP_DLC_MASK;

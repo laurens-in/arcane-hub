@@ -27,35 +27,33 @@
 // INCLUDE
 //--------------------------------------------------------------------+
 #include "FreeRTOS.h"
-#include "task.h"
 #include "common/tusb_common.h"
+#include "task.h"
 
-
-void vApplicationMallocFailedHook(void)
-{
+void vApplicationMallocFailedHook(void) {
   taskDISABLE_INTERRUPTS();
   TU_ASSERT(false, );
 }
 
-void vApplicationStackOverflowHook(xTaskHandle pxTask, char *pcTaskName)
-{
-  (void) pxTask;
-  (void) pcTaskName;
+void vApplicationStackOverflowHook(xTaskHandle pxTask, char *pcTaskName) {
+  (void)pxTask;
+  (void)pcTaskName;
 
   taskDISABLE_INTERRUPTS();
   TU_ASSERT(false, );
 }
 
-/* configSUPPORT_STATIC_ALLOCATION is set to 1, so the application must provide an
- * implementation of vApplicationGetIdleTaskMemory() to provide the memory that is
- * used by the Idle task. */
-void vApplicationGetIdleTaskMemory( StaticTask_t **ppxIdleTaskTCBBuffer, StackType_t **ppxIdleTaskStackBuffer, uint32_t *pulIdleTaskStackSize )
-{
+/* configSUPPORT_STATIC_ALLOCATION is set to 1, so the application must provide
+ * an implementation of vApplicationGetIdleTaskMemory() to provide the memory
+ * that is used by the Idle task. */
+void vApplicationGetIdleTaskMemory(StaticTask_t **ppxIdleTaskTCBBuffer,
+                                   StackType_t **ppxIdleTaskStackBuffer,
+                                   uint32_t *pulIdleTaskStackSize) {
   /* If the buffers to be provided to the Idle task are declared inside this
-   * function then they must be declared static - otherwise they will be allocated on
-   * the stack and so not exists after this function exits. */
+   * function then they must be declared static - otherwise they will be
+   * allocated on the stack and so not exists after this function exits. */
   static StaticTask_t xIdleTaskTCB;
-  static StackType_t uxIdleTaskStack[ configMINIMAL_STACK_SIZE ];
+  static StackType_t uxIdleTaskStack[configMINIMAL_STACK_SIZE];
 
   /* Pass out a pointer to the StaticTask_t structure in which the Idle task's
     state will be stored. */
@@ -70,16 +68,18 @@ void vApplicationGetIdleTaskMemory( StaticTask_t **ppxIdleTaskTCBBuffer, StackTy
   *pulIdleTaskStackSize = configMINIMAL_STACK_SIZE;
 }
 
-/* configSUPPORT_STATIC_ALLOCATION and configUSE_TIMERS are both set to 1, so the
- * application must provide an implementation of vApplicationGetTimerTaskMemory()
- * to provide the memory that is used by the Timer service task. */
-void vApplicationGetTimerTaskMemory( StaticTask_t **ppxTimerTaskTCBBuffer, StackType_t **ppxTimerTaskStackBuffer, uint32_t *pulTimerTaskStackSize )
-{
+/* configSUPPORT_STATIC_ALLOCATION and configUSE_TIMERS are both set to 1, so
+ * the application must provide an implementation of
+ * vApplicationGetTimerTaskMemory() to provide the memory that is used by the
+ * Timer service task. */
+void vApplicationGetTimerTaskMemory(StaticTask_t **ppxTimerTaskTCBBuffer,
+                                    StackType_t **ppxTimerTaskStackBuffer,
+                                    uint32_t *pulTimerTaskStackSize) {
   /* If the buffers to be provided to the Timer task are declared inside this
-   * function then they must be declared static - otherwise they will be allocated on
-   * the stack and so not exists after this function exits. */
+   * function then they must be declared static - otherwise they will be
+   * allocated on the stack and so not exists after this function exits. */
   static StaticTask_t xTimerTaskTCB;
-  static StackType_t uxTimerTaskStack[ configTIMER_TASK_STACK_DEPTH ];
+  static StackType_t uxTimerTaskStack[configTIMER_TASK_STACK_DEPTH];
 
   /* Pass out a pointer to the StaticTask_t structure in which the Timer
     task's state will be stored. */
@@ -96,18 +96,19 @@ void vApplicationGetTimerTaskMemory( StaticTask_t **ppxTimerTaskTCBBuffer, Stack
 
 #if CFG_TUSB_MCU == OPT_MCU_RX63X | CFG_TUSB_MCU == OPT_MCU_RX65X
 #include "iodefine.h"
-void vApplicationSetupTimerInterrupt(void)
-{
+void vApplicationSetupTimerInterrupt(void) {
   /* Enable CMT0 */
   unsigned short oldPRCR = SYSTEM.PRCR.WORD;
-  SYSTEM.PRCR.WORD = (0xA5u<<8) | TU_BIT(1);
-  MSTP(CMT0)       = 0;
-  SYSTEM.PRCR.WORD = (0xA5u<<8) | oldPRCR;
+  SYSTEM.PRCR.WORD = (0xA5u << 8) | TU_BIT(1);
+  MSTP(CMT0) = 0;
+  SYSTEM.PRCR.WORD = (0xA5u << 8) | oldPRCR;
 
-  CMT0.CMCNT      = 0;
-  CMT0.CMCOR      = (unsigned short)(((configPERIPHERAL_CLOCK_HZ/configTICK_RATE_HZ)-1)/128);
-  CMT0.CMCR.WORD  = TU_BIT(6) | 2;
-  IR(CMT0, CMI0)  = 0;
+  CMT0.CMCNT = 0;
+  CMT0.CMCOR =
+      (unsigned short)(((configPERIPHERAL_CLOCK_HZ / configTICK_RATE_HZ) - 1) /
+                       128);
+  CMT0.CMCR.WORD = TU_BIT(6) | 2;
+  IR(CMT0, CMI0) = 0;
   IPR(CMT0, CMI0) = configKERNEL_INTERRUPT_PRIORITY;
   IEN(CMT0, CMI0) = 1;
   CMT.CMSTR0.BIT.STR0 = 1;

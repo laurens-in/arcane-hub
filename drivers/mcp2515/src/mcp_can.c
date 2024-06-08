@@ -1,8 +1,8 @@
 #include <string.h>
 
 #include "mcp_can.h"
-#include "nrfx_spim.h"
 #include "nrfx_gpiote.h"
+#include "nrfx_spim.h"
 
 static volatile bool spi_xfer_done = true;
 mcp_can_t m_mcp_can;
@@ -32,7 +32,7 @@ void mcp_spi_init() {
       NRFX_GPIOTE_CONFIG_IN_SENSE_TOGGLE(true);
 
   nrfx_gpiote_in_init(MCP_PIN_INT, &mcp2515_int_config,
-                                 mcp2515_int_pin_handler);
+                      mcp2515_int_pin_handler);
 
   nrfx_gpiote_in_event_enable(MCP_PIN_INT, true);
 
@@ -58,9 +58,9 @@ void mcp2515_reset() {
   spi_xfer_done = false;
 
   nrfx_spim_xfer_desc_t xfer_desc = {.p_tx_buffer = m_tx_buf,
-                                    .tx_length = m_length,
-                                    .p_rx_buffer = NULL,
-                                    .rx_length = 0};
+                                     .tx_length = m_length,
+                                     .p_rx_buffer = NULL,
+                                     .rx_length = 0};
   nrfx_spim_xfer(&can_spi, &xfer_desc, 0);
 
   mcp2515_unselect();
@@ -80,15 +80,14 @@ uint8_t mcp2515_readRegister(const uint8_t address) {
   spi_xfer_done = false;
 
   nrfx_spim_xfer_desc_t xfer_desc = {.p_tx_buffer = m_tx_buf,
-                                    .tx_length = m_tx_length,
-                                    .p_rx_buffer = m_rx_buf,
-                                    .rx_length = m_rx_length};
+                                     .tx_length = m_tx_length,
+                                     .p_rx_buffer = m_rx_buf,
+                                     .rx_length = m_rx_length};
   nrfx_spim_xfer(&can_spi, &xfer_desc, 0);
 
   mcp2515_unselect();
 
   return m_rx_buf[2];
-
 }
 
 void mcp2515_readRegisterS(const uint8_t address, uint8_t values[],
@@ -108,9 +107,9 @@ void mcp2515_readRegisterS(const uint8_t address, uint8_t values[],
   spi_xfer_done = false;
 
   nrfx_spim_xfer_desc_t xfer_desc = {.p_tx_buffer = m_tx_buf,
-                                    .tx_length = m_tx_length,
-                                    .p_rx_buffer = m_rx_buf,
-                                    .rx_length = m_rx_length};
+                                     .tx_length = m_tx_length,
+                                     .p_rx_buffer = m_rx_buf,
+                                     .rx_length = m_rx_length};
   nrfx_spim_xfer(&can_spi, &xfer_desc, 0);
 
   for (i = 0; i < n && i < CAN_MAX_CHAR_IN_MESSAGE - 2; i++) {
@@ -131,9 +130,9 @@ void mcp2515_setRegister(const uint8_t address, const uint8_t value) {
   spi_xfer_done = false;
 
   nrfx_spim_xfer_desc_t xfer_desc = {.p_tx_buffer = m_tx_buf,
-                                    .tx_length = m_length,
-                                    .p_rx_buffer = NULL,
-                                    .rx_length = 0};
+                                     .tx_length = m_length,
+                                     .p_rx_buffer = NULL,
+                                     .rx_length = 0};
   nrfx_spim_xfer(&can_spi, &xfer_desc, 0);
 
   mcp2515_unselect();
@@ -156,9 +155,9 @@ void mcp2515_setRegisterS(const uint8_t address, const uint8_t values[],
   spi_xfer_done = false;
 
   nrfx_spim_xfer_desc_t xfer_desc = {.p_tx_buffer = m_tx_buf,
-                                    .tx_length = m_tx_length,
-                                    .p_rx_buffer = NULL,
-                                    .rx_length = 0};
+                                     .tx_length = m_tx_length,
+                                     .p_rx_buffer = NULL,
+                                     .rx_length = 0};
   nrfx_spim_xfer(&can_spi, &xfer_desc, 0);
 
   mcp2515_unselect();
@@ -174,9 +173,9 @@ void mcp2515_modifyRegister(const uint8_t address, const uint8_t mask,
   spi_xfer_done = false;
 
   nrfx_spim_xfer_desc_t xfer_desc = {.p_tx_buffer = m_tx_buf,
-                                    .tx_length = m_length,
-                                    .p_rx_buffer = NULL,
-                                    .rx_length = 0};
+                                     .tx_length = m_length,
+                                     .p_rx_buffer = NULL,
+                                     .rx_length = 0};
   nrfx_spim_xfer(&can_spi, &xfer_desc, 0);
 
   mcp2515_unselect();
@@ -195,9 +194,9 @@ uint8_t mcp2515_readStatus(void) {
   spi_xfer_done = false;
 
   nrfx_spim_xfer_desc_t xfer_desc = {.p_tx_buffer = m_tx_buf,
-                                    .tx_length = m_length,
-                                    .p_rx_buffer = m_rx_buf,
-                                    .rx_length = m_length};
+                                     .tx_length = m_length,
+                                     .p_rx_buffer = m_rx_buf,
+                                     .rx_length = m_length};
   nrfx_spim_xfer(&can_spi, &xfer_desc, 0);
 
   mcp2515_unselect();
@@ -462,7 +461,6 @@ uint8_t mcp2515_init(const uint8_t canSpeed,
 
   NRFX_DELAY_US(10000);
 
-
   if (res == MCP2515_OK) {
     mcp2515_initCANBuffers(); /* init canbuffers              */
 
@@ -700,7 +698,8 @@ uint8_t mcp_can_send_msg(uint32_t id, uint8_t ext, uint8_t len, uint8_t *buf) {
   return sendMsg();
 }
 
-uint8_t mcp_can_read_msg(uint32_t *id, uint8_t *ext, uint8_t *len, uint8_t buf[8]) {
+uint8_t mcp_can_read_msg(uint32_t *id, uint8_t *ext, uint8_t *len,
+                         uint8_t buf[8]) {
   uint8_t rc;
 
   rc = readMsg();

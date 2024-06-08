@@ -23,7 +23,6 @@
  *
  */
 
-
 #include "nrfx_gpiote.h"
 
 #include "FreeRTOS.h"
@@ -55,8 +54,6 @@ StaticTask_t usbd_taskdef;
 StackType_t idle_task_stack[128];
 StaticTask_t idle_task_taskdef;
 
-
-
 void gpiote_irq_handler(nrfx_gpiote_pin_t pin, nrf_gpiote_polarity_t action);
 
 /*------------- MAIN -------------*/
@@ -80,24 +77,23 @@ int main(void) {
       nrfx_gpiote_in_init(BUTTON_PIN, &config, gpiote_irq_handler);
   nrfx_gpiote_trigger_enable(BUTTON_PIN, true);
 
-
   // create task
   xTaskCreateStatic(idle_task, "idle", 128, NULL, configMAX_PRIORITIES - 10,
                     idle_task_stack, &idle_task_taskdef);
 
-  xTaskCreateStatic(can_read_task, "can_read", STACK_SIZE, NULL, configMAX_PRIORITIES-2,
-                    can_read_task_stack, &can_read_task_taskdef);
+  xTaskCreateStatic(can_read_task, "can_read", STACK_SIZE, NULL,
+                    configMAX_PRIORITIES - 2, can_read_task_stack,
+                    &can_read_task_taskdef);
 
-  can_write_task_handle = xTaskCreateStatic(can_write_task, "can_write", STACK_SIZE, NULL, configMAX_PRIORITIES-2,
-                    can_write_task_stack, &can_write_task_taskdef);
+  can_write_task_handle = xTaskCreateStatic(
+      can_write_task, "can_write", STACK_SIZE, NULL, configMAX_PRIORITIES - 2,
+      can_write_task_stack, &can_write_task_taskdef);
 
-  xTaskCreateStatic(cdc_task, "cdc", STACK_SIZE, NULL,
-                    configMAX_PRIORITIES - 2, cdc_task_stack, &cdc_task_taskdef);
-                    
+  xTaskCreateStatic(cdc_task, "cdc", STACK_SIZE, NULL, configMAX_PRIORITIES - 2,
+                    cdc_task_stack, &cdc_task_taskdef);
+
   xTaskCreateStatic(usbd_task, "usbd", STACK_SIZE, NULL,
                     configMAX_PRIORITIES - 1, usbd_stack, &usbd_taskdef);
-
-
 
   vTaskStartScheduler();
 
@@ -107,12 +103,11 @@ int main(void) {
   }
 }
 
-
 void gpiote_irq_handler(nrfx_gpiote_pin_t pin, nrf_gpiote_polarity_t action) {
   BaseType_t xHigherPriorityTaskWoken = pdFALSE;
-  
+
   xTaskNotifyFromISR(can_write_task_handle, 0, eNoAction,
-                &xHigherPriorityTaskWoken);
+                     &xHigherPriorityTaskWoken);
 
   portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
 }

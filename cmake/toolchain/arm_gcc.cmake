@@ -34,7 +34,6 @@ list(APPEND TOOLCHAIN_COMMON_FLAGS
 set(TOOLCHAIN_EXE_LINKER_FLAGS
   -Wl,--print-memory-usage
   -Wl,--gc-sections
-  #-Wl,--cref
   )
 
 include(${CMAKE_CURRENT_LIST_DIR}/set_flags.cmake)

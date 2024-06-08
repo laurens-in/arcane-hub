@@ -2,11 +2,8 @@
 
 #include "tusb.h"
 
-// #include "FreeRTOS.h"
-// #include "queue.h"
-// #include "semphr.h"
-// #include "task.h"
-// #include "timers.h"
+#include "FreeRTOS.h"
+#include "task.h"
 
 #include "mcp_can.h"
 #include "arcane.h"

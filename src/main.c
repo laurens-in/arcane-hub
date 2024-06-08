@@ -26,12 +26,8 @@
 
 #include "nrfx_gpiote.h"
 
-// #include "FreeRTOS.h"
-// #include "queue.h"
-// #include "semphr.h"
-// #include "task.h"
-// #include "timers.h"
-
+#include "FreeRTOS.h"
+#include "task.h"
 
 #include "bsp/board_api.h" // TODO: remove
 #include "tusb.h"

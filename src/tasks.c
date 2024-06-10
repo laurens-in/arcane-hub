@@ -8,10 +8,7 @@
 #include "arcane.h"
 #include "mcp_can.h"
 #include "tasks.h"
-
-#include "bsp/board_api.h" // TODO: remove
-
-static uint8_t led_status = 0; // TODO: remove
+#include "bsp.h"
 
 void cdc_task(void *params) {
   for (;;) {
@@ -48,7 +45,7 @@ void can_read_task(void *param) {
 
       mcp_can_read_msg(&can_id, &ext, &len, buf);
 
-      uint8_t code = get_func_code(can_id, ext);
+      uint8_t code = get_func_code(can_id);
 
       if (code == FUNC_MIDI0 || code == FUNC_MIDI1 || code == FUNC_MIDI2) {
         uint8_t note[3] = {buf[0], buf[1], buf[2]};
@@ -58,16 +55,14 @@ void can_read_task(void *param) {
   }
 }
 
-void can_write_task(void *param) {
+void cycle_config_task(void *param) {
   for (;;) {
     xTaskNotifyWait(pdFALSE, ULONG_MAX, NULL, portMAX_DELAY);
-    // Toggle LED when the button is pressed
-    led_status = led_status == 0 ? 1 : 0;
+    led_write(1);
     uint8_t tmp_buffer[4] = {0x01, 0x02, 0x03, 0x04};
     uint8_t code = mcp_can_send_msg(FUNC_CFGW || 0x01, 0, 4, tmp_buffer);
-    board_led_write(led_status);
-
     vTaskDelay(20);
+    led_write(0);
   }
 }
 
@@ -94,4 +89,16 @@ void idle_task(void *param) {
     // __WFE(); // Wait for event (low power idle)
     vTaskDelay(20);
   }
+}
+
+/**
+ * IRQ handler for user button
+ */
+void button_irq_handler(nrfx_gpiote_pin_t pin, nrf_gpiote_polarity_t action) {
+  BaseType_t xHigherPriorityTaskWoken = pdFALSE;
+
+  xTaskNotifyFromISR(cycle_config_task_handle, 0, eNoAction,
+                     &xHigherPriorityTaskWoken);
+
+  portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
 }

@@ -4,7 +4,6 @@
 #include "nrfx_gpiote.h"
 #include "nrfx_spim.h"
 
-static volatile bool spi_xfer_done = true;
 mcp_can_t m_mcp_can;
 
 #define SPI_CAN_INSTANCE 1 /**< SPI instance index. */
@@ -25,7 +24,7 @@ void mcp2515_int_pin_handler(nrfx_gpiote_pin_t pin,
 }
 
 void mcp_spi_init() {
-  mcp_can_setcs(SPI_SS_PIN);
+  mcp_can_setcs(MCP_SPI_SS_PIN);
 
   nrf_gpio_cfg_input(MCP_PIN_INT, NRF_GPIO_PIN_NOPULL);
   nrfx_gpiote_in_config_t mcp2515_int_config =
@@ -37,7 +36,7 @@ void mcp_spi_init() {
   nrfx_gpiote_in_event_enable(MCP_PIN_INT, true);
 
   nrfx_spim_config_t spim_config = NRFX_SPIM_DEFAULT_CONFIG(
-      SPI_SCK_PIN, SPI_MOSI_PIN, SPI_MISO_PIN, SPI_SS_PIN);
+      MCP_SPI_SCK_PIN, MCP_SPI_MOSI_PIN, MCP_SPI_MISO_PIN, MCP_SPI_SS_PIN);
   spim_config.frequency = NRF_SPIM_FREQ_125K;
   spim_config.mode = NRF_SPIM_MODE_0;
   spim_config.bit_order = NRF_SPIM_BIT_ORDER_MSB_FIRST;
@@ -54,8 +53,6 @@ void mcp2515_reset() {
 
   uint8_t m_tx_buf[1] = {MCP_RESET};
   uint8_t m_length = sizeof(m_tx_buf);
-
-  spi_xfer_done = false;
 
   nrfx_spim_xfer_desc_t xfer_desc = {.p_tx_buffer = m_tx_buf,
                                      .tx_length = m_length,
@@ -76,8 +73,6 @@ uint8_t mcp2515_readRegister(const uint8_t address) {
   uint8_t m_rx_length = sizeof(m_rx_buf);
 
   memset(m_rx_buf, 0, m_rx_length);
-
-  spi_xfer_done = false;
 
   nrfx_spim_xfer_desc_t xfer_desc = {.p_tx_buffer = m_tx_buf,
                                      .tx_length = m_tx_length,
@@ -104,8 +99,6 @@ void mcp2515_readRegisterS(const uint8_t address, uint8_t values[],
 
   memset(m_rx_buf, 0, m_rx_length);
 
-  spi_xfer_done = false;
-
   nrfx_spim_xfer_desc_t xfer_desc = {.p_tx_buffer = m_tx_buf,
                                      .tx_length = m_tx_length,
                                      .p_rx_buffer = m_rx_buf,
@@ -126,8 +119,6 @@ void mcp2515_setRegister(const uint8_t address, const uint8_t value) {
 
   uint8_t m_tx_buf[3] = {MCP_WRITE, address, value};
   uint8_t m_length = sizeof(m_tx_buf);
-
-  spi_xfer_done = false;
 
   nrfx_spim_xfer_desc_t xfer_desc = {.p_tx_buffer = m_tx_buf,
                                      .tx_length = m_length,
@@ -152,8 +143,6 @@ void mcp2515_setRegisterS(const uint8_t address, const uint8_t values[],
   memcpy(m_tx_buf + 2, values,
          n * sizeof(uint8_t)); // copy n uint8_t from values to m_tx_buf
 
-  spi_xfer_done = false;
-
   nrfx_spim_xfer_desc_t xfer_desc = {.p_tx_buffer = m_tx_buf,
                                      .tx_length = m_tx_length,
                                      .p_rx_buffer = NULL,
@@ -169,8 +158,6 @@ void mcp2515_modifyRegister(const uint8_t address, const uint8_t mask,
 
   uint8_t m_tx_buf[4] = {MCP_BITMOD, address, mask, data};
   uint8_t m_length = sizeof(m_tx_buf);
-
-  spi_xfer_done = false;
 
   nrfx_spim_xfer_desc_t xfer_desc = {.p_tx_buffer = m_tx_buf,
                                      .tx_length = m_length,
@@ -190,8 +177,6 @@ uint8_t mcp2515_readStatus(void) {
   uint8_t m_rx_buf[2];
 
   memset(m_rx_buf, 0, m_length);
-
-  spi_xfer_done = false;
 
   nrfx_spim_xfer_desc_t xfer_desc = {.p_tx_buffer = m_tx_buf,
                                      .tx_length = m_length,

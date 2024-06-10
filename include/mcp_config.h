@@ -1,13 +1,13 @@
 #ifndef MCP_CONFIG_H
 #define MCP_CONFIG_H
 
-#include "nrfx_gpiote.h"
+#include "bsp.h"
 
-#define SPI_SS_PIN					NRF_GPIO_PIN_MAP(1,8)
-#define SPI_SCK_PIN					NRF_GPIO_PIN_MAP(0,14)
-#define SPI_MOSI_PIN				NRF_GPIO_PIN_MAP(0,13)
-#define SPI_MISO_PIN				NRF_GPIO_PIN_MAP(0,15)
-#define MCP_LED_INT					NRF_GPIO_PIN_MAP(1,15)
-#define MCP_PIN_INT			    NRF_GPIO_PIN_MAP(0,7)
+#define MCP_SPI_SS_PIN	   SPI_SS_PIN
+#define MCP_SPI_SCK_PIN		 SPI_SCK_PIN			
+#define MCP_SPI_MOSI_PIN	 SPI_MOSI_PIN			
+#define MCP_SPI_MISO_PIN	 SPI_MISO_PIN		
+#define MCP_LED_INT				 LED_PIN
+#define MCP_PIN_INT			   MCP_INT
 
 #endif /* MCP_CONFIG_H */

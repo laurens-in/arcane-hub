@@ -136,7 +136,7 @@ set(BMP "/dev/ttyBmpGdb")
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
     # Define the 'debug-bmp' target
     add_custom_target(debug-bmp
-        COMMAND ${GDB} -ex "target extended-remote ${BMP}" -ex "monitor swdp_scan" -ex "attach 1" $<TARGET_FILE:${PROJECT_NAME}>
+        COMMAND ${GDB} -ex "target extended-remote ${BMP}" -ex "monitor swdp_scan" -ex "attach 1" -ex "load" $<TARGET_FILE:${PROJECT_NAME}>
         DEPENDS ${PROJECT_NAME}
         COMMENT "Debugging ${PROJECT_NAME} on ${BMP}"
     )

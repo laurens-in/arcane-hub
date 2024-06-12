@@ -56,11 +56,13 @@ void can_read_task(void *param) {
 }
 
 void cycle_config_task(void *param) {
+  uint8_t channel = 0;
   for (;;) {
     xTaskNotifyWait(pdFALSE, ULONG_MAX, NULL, portMAX_DELAY);
     led_write(1);
-    uint8_t tmp_buffer[4] = {0x01, 0x02, 0x03, 0x04};
-    uint8_t code = mcp_can_send_msg(FUNC_CFGW || 0x01, 0, 4, tmp_buffer);
+    channel = (channel + 1) % 8;
+    uint8_t tmp_buffer[4] = {0x05, channel};
+    uint8_t code = mcp_can_send_msg(get_arcane_id(FUNC_CFGW,0x01), 0, 2, tmp_buffer);
     vTaskDelay(20);
     led_write(0);
   }

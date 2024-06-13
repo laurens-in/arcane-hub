@@ -1,20 +1,13 @@
 #include "tusb.h"
 
-// send characters to CDC
-void echo_all(uint8_t buf[], uint32_t count) {
-  // echo to cdc
-  if (tud_cdc_connected()) {
-    for (uint32_t i = 0; i < count; i++) {
-      tud_cdc_write_char(buf[i]);
-
-      if (buf[i] == '\r')
-        tud_cdc_write_char('\n');
-    }
-    tud_cdc_write_flush();
-  }
-}
-
-// Invoked when cdc when line state changed e.g connected/disconnected
+/**
+ * @brief Callback invoked when the CDC line state changes (e.g., connected/disconnected).
+ *
+ * This function is called automatically when the line state of the CDC interface
+ * changes, such as when the device is connected or disconnected. When connected,
+ * it sends a welcome message to the connected device.
+ *
+ */
 void tud_cdc_line_state_cb(uint8_t itf, bool dtr, bool rts) {
   (void)itf;
 
@@ -25,5 +18,11 @@ void tud_cdc_line_state_cb(uint8_t itf, bool dtr, bool rts) {
   }
 }
 
-// Invoked when CDC interface received data from host
+/**
+ * @brief Callback invoked when the CDC interface receives data from the host.
+ *
+ * This function is called automatically when data is received from the host
+ * on the CDC interface. The interface number is provided as a parameter.
+ *
+ */
 void tud_cdc_rx_cb(uint8_t itf) { (void)itf; }

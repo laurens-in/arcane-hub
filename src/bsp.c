@@ -7,18 +7,12 @@
 void usb_init(void);
 void button_init(void);
 
-/**
- * General initialization function
- */
 void init(void) {
   if (nrfx_gpiote_is_init() == false) nrfx_gpiote_init(3);
   usb_init();
   button_init();
 }
 
-/**
- * @brief Initialize USB
- */
 void usb_init(void) {
   // configure UART etc.
   board_init();
@@ -27,10 +21,6 @@ void usb_init(void) {
   tusb_init();
 }
 
-
-/**
- * Initialize user button
- */
 void button_init(void) {
   nrf_gpio_cfg_input(BUTTON_PIN, NRF_GPIO_PIN_PULLUP);
 

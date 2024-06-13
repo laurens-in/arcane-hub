@@ -16,15 +16,27 @@ void cdc_task(void *params) {
       // connected and there are data available
       if (tud_cdc_available()) {
         // [read/write, node_id, param_id, length, data 0-8]
-        uint8_t buf[12];
+        uint8_t buf[11];
 
         uint32_t count = tud_cdc_read(buf, sizeof(buf));
 
-        uint8_t data[buf[4]];
+        uint8_t function_code = buf[0];
+        uint8_t node_id = buf[1];
+        uint8_t param_index = buf[2];
+        uint8_t param_length = buf[3];
 
-        memcpy(data, buf, buf[4]);
+        // Allocate an array of the correct size for the payload
+        uint8_t param_data[param_length];
 
-        uint8_t code = mcp_can_send_msg(FUNC_CFGW || 0x01, 0, buf[4], data);
+        // Copy the payload data from buf to param_data
+        memcpy(param_data, &buf[4], param_length);
+
+            // Create the final payload array with param_index followed by param_data
+        uint8_t payload[param_length + 1];
+        payload[0] = param_index; // First element is param_index
+        memcpy(&payload[1], param_data, param_length); // Copy param_data to payload starting from index 1
+
+        uint8_t code = mcp_can_send_msg(get_arcane_id(function_code, node_id), 0, sizeof(payload), payload);
       }
     }
   }
@@ -61,7 +73,7 @@ void cycle_config_task(void *param) {
     xTaskNotifyWait(pdFALSE, ULONG_MAX, NULL, portMAX_DELAY);
     led_write(1);
     channel = (channel + 1) % 8;
-    uint8_t tmp_buffer[4] = {0x05, channel};
+    uint8_t tmp_buffer[2] = {0x05, channel};
     uint8_t code = mcp_can_send_msg(get_arcane_id(FUNC_CFGW,0x01), 0, 2, tmp_buffer);
     vTaskDelay(20);
     led_write(0);
